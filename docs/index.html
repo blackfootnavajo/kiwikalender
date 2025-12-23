@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Kalender 2025/2026</title>
+    <title>Kalender 2025-2027</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Libraries -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
@@ -11,7 +11,7 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
         body { font-family: 'Inter', sans-serif; }
-        
+
         @media print {
             body { -webkit-print-color-adjust: exact; print-color-adjust: exact; background-color: white; }
             .no-print { display: none !important; }
@@ -47,7 +47,7 @@
 <body class="bg-gray-50 min-h-screen p-4 md:p-8">
 
     <div id="calendar-content" class="max-w-7xl mx-auto">
-        
+
         <!-- Header / Controls -->
         <div class="flex flex-col xl:flex-row justify-between items-center mb-8 no-print gap-6">
             <div class="text-center xl:text-left">
@@ -59,12 +59,13 @@
                     </button>
                 </div>
             </div>
-            
+
             <div class="flex flex-col md:flex-row gap-4 items-center">
                 <!-- Year Switcher -->
                 <div class="flex bg-white rounded-lg p-1 shadow-sm border border-gray-200">
                     <button onclick="setYear(2025)" id="btn-2025" class="px-3 py-1.5 rounded-md text-xs font-medium transition bg-gray-100 text-gray-900 shadow-sm">2025</button>
                     <button onclick="setYear(2026)" id="btn-2026" class="px-3 py-1.5 rounded-md text-xs font-medium transition text-gray-500 hover:text-gray-900">2026</button>
+                    <button onclick="setYear(2027)" id="btn-2027" class="px-3 py-1.5 rounded-md text-xs font-medium transition text-gray-500 hover:text-gray-900">2027</button>
                 </div>
 
                 <!-- Actions -->
@@ -127,7 +128,7 @@
             <h3 class="text-xl font-bold text-gray-800 mb-2">Wochentage markieren</h3>
             <p class="text-sm text-gray-500 mb-5">Wählen Sie die Tage für das Jahr <span id="modal-year" class="font-bold"></span>.</p>
             <p class="text-[10px] text-blue-500 mb-4 italic">* Es werden nur Termine bis zum heutigen Tag eingetragen.</p>
-            
+
             <div class="space-y-2 mb-6">
                 <label class="flex items-center p-2 hover:bg-gray-50 rounded-lg cursor-pointer transition">
                     <input type="checkbox" value="1" class="w-5 h-5 text-blue-600 rounded border-gray-300">
@@ -169,7 +170,7 @@
     <script>
         const months = ["Januar", "Februar", "März", "April", "Mai", "Juni", "Juli", "August", "September", "Oktober", "November", "Dezember"];
         const daysShort = ["Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"];
-        
+
         // State
         let currentYear = 2025;
         let isEditMode = false;
@@ -211,17 +212,18 @@
             currentYear = year;
             document.getElementById('year-display').innerText = year;
             document.getElementById('stat-year').innerText = year;
-            
+
             const btn2025 = document.getElementById('btn-2025');
             const btn2026 = document.getElementById('btn-2026');
-            
-            if (year === 2025) {
-                btn2025.className = "px-3 py-1.5 rounded-md text-xs font-medium transition bg-gray-100 text-gray-900 shadow-sm";
-                btn2026.className = "px-3 py-1.5 rounded-md text-xs font-medium transition text-gray-500 hover:text-gray-900";
-            } else {
-                btn2025.className = "px-3 py-1.5 rounded-md text-xs font-medium transition text-gray-500 hover:text-gray-900";
-                btn2026.className = "px-3 py-1.5 rounded-md text-xs font-medium transition bg-gray-100 text-gray-900 shadow-sm";
-            }
+            const btn2027 = document.getElementById('btn-2027');
+
+            const activeClass = "px-3 py-1.5 rounded-md text-xs font-medium transition bg-gray-100 text-gray-900 shadow-sm";
+            const inactiveClass = "px-3 py-1.5 rounded-md text-xs font-medium transition text-gray-500 hover:text-gray-900";
+
+            btn2025.className = (year === 2025) ? activeClass : inactiveClass;
+            btn2026.className = (year === 2026) ? activeClass : inactiveClass;
+            btn2027.className = (year === 2027) ? activeClass : inactiveClass;
+
             initCalendar();
         }
 
@@ -232,7 +234,7 @@
             months.forEach((monthName, index) => {
                 const monthDiv = document.createElement('div');
                 monthDiv.className = "bg-white p-4 rounded-xl shadow-sm border border-gray-100 break-inside-avoid month-card";
-                
+
                 const title = document.createElement('h2');
                 title.className = "text-sm font-bold text-gray-800 mb-3 text-center";
                 title.innerText = monthName;
@@ -252,7 +254,7 @@
                 daysGrid.className = "grid grid-cols-7 gap-1";
 
                 const firstDay = new Date(currentYear, index, 1);
-                let startDay = firstDay.getDay(); 
+                let startDay = firstDay.getDay();
                 startDay = (startDay === 0) ? 6 : startDay - 1;
 
                 const daysInMonth = new Date(currentYear, index + 1, 0).getDate();
@@ -266,7 +268,7 @@
                     const cell = document.createElement('div');
                     cell.className = "day-cell text-xs text-gray-700";
                     cell.innerText = d;
-                    
+
                     if (markedDates.has(dateStr)) cell.classList.add('marked');
 
                     cell.onclick = () => {
@@ -283,7 +285,7 @@
         function toggleDate(dateStr) {
             if (markedDates.has(dateStr)) markedDates.delete(dateStr);
             else markedDates.add(dateStr);
-            initCalendar(); 
+            initCalendar();
         }
 
         function clearAll() {
@@ -317,9 +319,9 @@
                     const daysInMonth = new Date(currentYear, m + 1, 0).getDate();
                     for (let d = 1; d <= daysInMonth; d++) {
                         const date = new Date(currentYear, m, d);
-                        
+
                         // Condition: Is a selected weekday AND is not in the future
-                        if (selectedDays.includes(date.getDay()) && date <= today) { 
+                        if (selectedDays.includes(date.getDay()) && date <= today) {
                             markedDates.add(`${currentYear}-${String(m + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`);
                         }
                     }
@@ -332,11 +334,11 @@
         // --- STATISTICS ---
         function updateStats() {
             const currentYearDates = Array.from(markedDates).filter(d => d.startsWith(String(currentYear)));
-            
+
             document.getElementById('total-count').innerText = currentYearDates.length;
 
-            const weekdayCounts = new Array(7).fill(0); 
-            const weekCounts = new Array(54).fill(0); 
+            const weekdayCounts = new Array(7).fill(0);
+            const weekCounts = new Array(54).fill(0);
 
             currentYearDates.forEach(dateStr => {
                 const dateObj = new Date(dateStr);
