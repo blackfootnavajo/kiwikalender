@@ -1,43 +1,63 @@
-Kalender 2025-2027
+Kalender & Dashboard 2025/2026
 
-Ein interaktiver Web-Kalender zur Nachverfolgung von Ereignissen oder Terminen mit integrierten Statistiken und Exportfunktionen.
+Übersicht
+
+Diese Web-Anwendung ist ein interaktives Werkzeug zur Verwaltung von Terminen und Arbeitsstunden für die Jahre 2025 und 2026. Sie kombiniert eine übersichtliche Kalenderdarstellung mit einem leistungsstarken Dashboard zur statistischen Auswertung.
 
 Hauptfunktionen
 
-Interaktive Markierung: Schalten Sie den Bearbeitungsmodus ein, um einzelne Tage per Klick rot zu markieren oder zu demarkieren.
+1. Duales Ansichtssystem
 
-Wochentage-Tool: Markieren Sie automatisch alle Montage, Dienstage usw. für das gesamte Jahr. Die Funktion ist additiv und beschränkt sich auf Termine bis zum aktuellen Tagesdatum.
+Dashboard: Bietet eine visuelle Auswertung Ihrer Daten mit Diagrammen (Chart.js). Es zeigt wöchentliche Termine, die Verteilung nach Wochentagen und (für 2026) eine detaillierte Stundenübersicht pro Woche.
 
-Statistik-Dashboard:
+Kalender: Eine klassische 12-Monats-Übersicht. Beim Wechsel in die Kalenderansicht springt die App automatisch zum aktuellen Monat des gewählten Jahres.
 
-Wöchentlicher Trend: Visualisierung der Termindichte über die Kalenderwochen (1–53).
+2. Daten-Tracking & Speicherung
 
-Wochentage: Balkendiagramm zur Analyse, an welchen Wochentagen die meisten Termine anfallen.
+Termine (2025/2026): Einfaches Markieren von Tagen.
 
-Gesamtzähler: Echtzeit-Anzeige der markierten Tage im gewählten Jahr.
+Stunden-Erfassung (nur 2026): Ein modales Fenster ermöglicht die Eingabe von Arbeitsstunden pro Tag.
 
-Datensicherung:
+Persistenz: Alle Daten werden automatisch via localStorage im Browser gespeichert. Beim Schließen und Wiederöffnen der App bleiben Ihre Einträge erhalten.
 
-JSON Export/Import: Speichern Sie Ihren Fortschritt in einer lokalen Datei und laden Sie ihn jederzeit wieder hoch.
+3. Design & Bedienung
 
-PDF-Export: Erstellen Sie ein druckfertiges Dokument Ihres Kalenders im Querformat.
+Dark Theme: Ein modernes, augenschonendes Design basierend auf der Farbe #2e3847.
 
-Jahresansicht: Wechseln Sie nahtlos zwischen den Jahren 2025, 2026 und 2027.
+Responsive Layout: Optimiert für Desktop und mobile Endgeräte (inklusive Swipe-Gesten zur Navigation zwischen Dashboard und Kalender).
 
-Bedienung
+Interaktive Statistiken: Dynamische Berechnung des Stundendurchschnitts basierend auf den tatsächlich geleisteten Arbeitstagen.
 
-Markieren: Klicken Sie auf "Bearbeiten AUS", um in den Modus "Bearbeiten AN" zu wechseln. Klicken Sie nun auf beliebige Tage.
+4. Datenmanagement
 
-Massen-Eintrag: Nutzen Sie den Button "Wochentage", um regelmäßig wiederkehrende Termine der Vergangenheit schnell zu erfassen.
+PDF-Export: Generiert eine druckoptimierte Übersicht des Kalenders.
 
-Speichern: Nutzen Sie den "JSON"-Button, um Ihre Daten lokal zu sichern. Da der Browser im Preview-Modus keine permanente Datenbank hat, ist dieser Export wichtig für die dauerhafte Nutzung.
+JSON-Export/Import: Ermöglicht manuelle Backups oder den Transfer der Daten auf andere Geräte.
+
+Jahr leeren: Funktion zum schnellen Löschen aller Markierungen eines spezifischen Jahres.
 
 Technische Details
 
-Styling: Tailwind CSS
+Frontend: HTML5, Tailwind CSS, JavaScript (ES6+).
 
-Diagramme: Chart.js
+Bibliotheken:
 
-PDF-Generierung: html2pdf.js
+Chart.js für die Statistiken.
 
-Schriftart: Inter (via Google Fonts)
+html2pdf.js für den PDF-Export.
+
+Lucide / SVG-Icons für die Benutzeroberfläche.
+
+Berechnungslogik: Verwendet die ISO-Wochenzählung zur korrekten Gruppierung von Daten in KW (Kalenderwochen).
+
+Bedienungsanleitung
+
+Jahr wählen: Nutzen Sie die Buttons oben links, um zwischen 2025 und 2026 zu wechseln.
+
+Bearbeiten: Aktivieren Sie den "Bearbeiten"-Modus über das Zahnrad-Menü, um Tage zu markieren oder Stunden (2026) einzutragen.
+
+Navigation: Klicken Sie auf die unteren Navigations-Buttons oder wischen Sie (auf mobilen Geräten) nach links/rechts, um die Ansicht zu wechseln.
+
+Sicherung: Nutzen Sie regelmäßig den JSON-Export, um Ihre Daten extern zu sichern.
+
+Hinweis: Diese Anwendung läuft vollständig clientseitig im Browser. Es werden keine Daten an einen externen Server übertragen.
