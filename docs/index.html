@@ -10,34 +10,46 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
-        body { font-family: 'Inter', sans-serif; -webkit-tap-highlight-color: transparent; }
+        body { 
+            font-family: 'Inter', sans-serif; 
+            -webkit-tap-highlight-color: transparent; 
+            background-color: #1a1f26;
+            color: #f3f4f6;
+            overflow-x: hidden;
+        }
         
         @media print {
-            body { -webkit-print-color-adjust: exact; print-color-adjust: exact; background-color: white; }
+            body { -webkit-print-color-adjust: exact; print-color-adjust: exact; background-color: white; color: black; }
             .no-print { display: none !important; }
             .max-w-7xl { max-width: 100% !important; margin: 0 !important; padding: 0 !important; }
+            .bg-[#2e3847] { background-color: white !important; border: 1px solid #e5e7eb !important; }
+            .text-white { color: black !important; }
         }
 
         .day-cell {
             aspect-ratio: 1;
             display: flex;
+            flex-direction: column;
             align-items: center;
             justify-content: center;
-            border-radius: 0.375rem;
-            transition: all 0.1s;
+            border-radius: 0.5rem;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
             position: relative;
             user-select: none;
             cursor: default;
+            border: 1px solid transparent;
+            color: #9ca3af;
         }
 
         .edit-mode .day-cell { cursor: pointer; }
-        .edit-mode .day-cell:hover { background-color: #f3f4f6; }
-        .edit-mode .day-cell:active { transform: scale(0.95); background-color: #e5e7eb; }
+        .edit-mode .day-cell:hover { background-color: #3d4959; border-color: #4b5563; color: white; }
+        .edit-mode .day-cell:active { transform: scale(0.92); background-color: #4b5563; }
 
         .day-cell.marked {
             background-color: #ef4444 !important;
-            color: white;
+            color: white !important;
             font-weight: bold;
+            box-shadow: 0 4px 12px -1px rgba(239, 68, 68, 0.4);
         }
 
         .chart-container {
@@ -64,86 +76,102 @@
             transform: translateX(0);
         }
 
-        .view-section.hidden-right { transform: translateX(100%); }
-        .view-section.hidden-left { transform: translateX(-100%); }
+        .view-section.hidden-right { transform: translateX(30px); }
+        .view-section.hidden-left { transform: translateX(-30px); }
 
         /* Custom Scrollbar */
         ::-webkit-scrollbar { width: 6px; }
-        ::-webkit-scrollbar-track { background: #f1f1f1; }
-        ::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 10px; }
-        ::-webkit-scrollbar-thumb:hover { background: #9ca3af; }
+        ::-webkit-scrollbar-track { background: #1a1f26; }
+        ::-webkit-scrollbar-thumb { background: #4b5563; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #6b7280; }
 
-        /* Dropdown Animation */
         #actions-dropdown {
             transform-origin: top right;
             transition: opacity 0.2s ease, transform 0.2s ease;
+            background-color: #2e3847;
+            border: 1px solid #4b5563;
         }
         #actions-dropdown.hidden {
             display: none;
             opacity: 0;
             transform: scale(0.95);
         }
+
+        .toast-notification {
+            position: fixed;
+            bottom: 100px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 200;
+            padding: 12px 24px;
+            background: #3b82f6;
+            color: white;
+            border-radius: 9999px;
+            font-size: 14px;
+            font-weight: 600;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
+            opacity: 0;
+            pointer-events: none;
+            transition: all 0.3s ease;
+        }
+        .toast-notification.show {
+            opacity: 1;
+            bottom: 120px;
+        }
     </style>
 </head>
-<body class="bg-gray-50 min-h-screen p-4 md:p-8 pb-24 md:pb-8">
+<body class="min-h-screen p-4 md:p-8 pb-24 md:pb-8">
 
-    <!-- Header (Shared between views) -->
+    <div id="toast" class="toast-notification">Nachricht</div>
+
+    <!-- Header -->
     <header class="max-w-7xl mx-auto mb-8 no-print flex flex-row justify-between items-center gap-2">
-        <!-- Year Selector -->
-        <div class="flex bg-white rounded-xl p-1 shadow-sm border border-gray-200">
-            <button onclick="setYear(2025)" id="btn-2025" class="px-4 py-2 md:px-6 rounded-lg text-sm font-bold transition">2025</button>
-            <button onclick="setYear(2026)" id="btn-2026" class="px-4 py-2 md:px-6 rounded-lg text-sm font-bold transition">2026</button>
+        <div class="flex bg-[#2e3847] rounded-2xl p-1.5 shadow-lg border border-[#4b5563]">
+            <button onclick="setYear(2025)" id="btn-2025" class="px-5 py-2 rounded-xl text-sm font-bold transition-all">2025</button>
+            <button onclick="setYear(2026)" id="btn-2026" class="px-5 py-2 rounded-xl text-sm font-bold transition-all">2026</button>
         </div>
 
-        <!-- Unified Menu -->
         <div class="relative inline-block text-left" id="menu-container">
-            <button onclick="toggleDropdown(event)" class="inline-flex justify-center items-center rounded-xl border border-gray-200 shadow-sm p-2 bg-white text-gray-700 hover:bg-gray-50 focus:outline-none transition" aria-label="Settings">
-                <!-- Cog Wheel Icon -->
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <button onclick="toggleDropdown(event)" class="inline-flex justify-center items-center rounded-2xl border border-[#4b5563] shadow-lg p-2.5 bg-[#2e3847] text-gray-200 hover:bg-[#3d4959] focus:outline-none transition-all" aria-label="Einstellungen">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
                     <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                 </svg>
             </button>
 
-            <!-- Dropdown menu -->
-            <div id="actions-dropdown" class="hidden absolute right-0 z-[60] mt-2 w-56 rounded-xl shadow-lg bg-white ring-1 ring-black ring-opacity-5 focus:outline-none overflow-hidden">
+            <div id="actions-dropdown" class="hidden absolute right-0 z-[60] mt-2 w-64 rounded-2xl shadow-2xl focus:outline-none overflow-hidden">
                 <div class="py-1">
-                    <!-- Edit Mode Toggle -->
-                    <button onclick="toggleEditMode()" class="group flex items-center w-full px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 transition border-b border-gray-50">
+                    <button onclick="toggleEditMode()" class="group flex items-center w-full px-4 py-3.5 text-sm text-gray-200 hover:bg-[#3d4959] transition border-b border-[#4b5563]">
                         <span id="edit-icon-wrapper" class="mr-3 text-gray-400 transition">
                             <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg>
                         </span>
-                        <span id="edit-text-label">Bearbeiten AUS</span>
+                        <span id="edit-text-label" class="font-medium">Bearbeiten AUS</span>
                     </button>
-                    <!-- Clear -->
-                    <button onclick="triggerClear()" class="group flex items-center w-full px-4 py-3 text-sm text-gray-700 hover:bg-red-50 hover:text-red-700 transition">
-                        <svg class="mr-3 h-5 w-5 text-gray-400 group-hover:text-red-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                        </svg>
-                        Löschen
-                    </button>
-                    <!-- PDF -->
-                    <button onclick="downloadPDF()" class="group flex items-center w-full px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 transition">
-                        <svg class="mr-3 h-5 w-5 text-gray-400 group-hover:text-red-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <button onclick="downloadPDF()" class="group flex items-center w-full px-4 py-3.5 text-sm text-gray-200 hover:bg-[#3d4959] transition">
+                        <svg class="mr-3 h-5 w-5 text-gray-400 group-hover:text-red-400 transition-colors" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
                         </svg>
                         PDF Export
                     </button>
-                    <!-- JSON -->
-                    <button onclick="downloadJSON()" class="group flex items-center w-full px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 transition">
-                        <svg class="mr-3 h-5 w-5 text-gray-400 group-hover:text-green-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <button onclick="downloadJSON()" class="group flex items-center w-full px-4 py-3.5 text-sm text-gray-200 hover:bg-[#3d4959] transition">
+                        <svg class="mr-3 h-5 w-5 text-gray-400 group-hover:text-emerald-400 transition-colors" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
                         </svg>
-                        JSON Export
+                        JSON Export (Backup)
                     </button>
-                    <!-- Load -->
-                    <label class="group flex items-center w-full px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 transition cursor-pointer">
-                        <svg class="mr-3 h-5 w-5 text-gray-400 group-hover:text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <label class="group flex items-center w-full px-4 py-3.5 text-sm text-gray-200 hover:bg-[#3d4959] transition cursor-pointer">
+                        <svg class="mr-3 h-5 w-5 text-gray-400 group-hover:text-blue-400 transition-colors" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0l-4 4m4-4v12" />
                         </svg>
-                        Laden
+                        Laden / Import
                         <input type="file" accept=".json" class="hidden" onchange="uploadJSON(this)">
                     </label>
+                    <button onclick="triggerClear()" class="group flex items-center w-full px-4 py-3.5 text-sm text-gray-200 hover:bg-red-900/30 hover:text-red-400 transition">
+                        <svg class="mr-3 h-5 w-5 text-gray-400 group-hover:text-red-500 transition-colors" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                        Jahr leeren
+                    </button>
                 </div>
             </div>
         </div>
@@ -153,37 +181,34 @@
 
         <!-- DASHBOARD VIEW -->
         <div id="dashboard-view" class="view-section active">
-            <!-- Statistics Grid -->
-            <div id="dashboard-stats" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-10">
-                <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
-                    <h3 class="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-2">Wöchentlich (KW)</h3>
+            <div id="dashboard-stats" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-10">
+                <div class="bg-[#2e3847] p-6 rounded-2xl shadow-xl border border-[#4b5563]">
+                    <h3 class="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-4">Wöchentliche Termine</h3>
                     <div class="chart-container">
                         <canvas id="weekChart"></canvas>
                     </div>
                 </div>
-                <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
-                    <h3 class="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-2">Wochentage</h3>
+                <div class="bg-[#2e3847] p-6 rounded-2xl shadow-xl border border-[#4b5563]">
+                    <h3 class="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-4">Verteilung Wochentage</h3>
                     <div class="chart-container">
                         <canvas id="weekdayChart"></canvas>
                     </div>
                 </div>
-                <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex flex-col justify-center items-center text-center">
-                    <h3 class="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-2">Gesamt <span id="stat-year">2025</span></h3>
-                    <div class="text-4xl font-bold text-red-500" id="total-count">0</div>
-                    <div class="text-[10px] text-gray-400 mt-1 uppercase">Termine</div>
+                <div class="bg-[#2e3847] p-6 rounded-2xl shadow-xl border border-[#4b5563] flex flex-col justify-center items-center text-center">
+                    <h3 class="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-2">Gesamt <span id="stat-year">2025</span></h3>
+                    <div class="text-5xl font-extrabold text-red-400 mb-1" id="total-count">0</div>
+                    <div class="text-xs text-gray-400 uppercase font-medium">Markierte Tage</div>
                     
-                    <!-- Advanced Stats for 2026+ -->
-                    <div id="hours-stats" class="mt-4 pt-4 border-t border-gray-100 w-full hidden">
-                        <div class="text-2xl font-bold text-orange-500" id="avg-hours">Ø 0</div>
-                        <div class="text-[10px] text-gray-400 uppercase">Durchschnitt</div>
+                    <div id="hours-stats" class="mt-6 pt-6 border-t border-[#4b5563] w-full hidden">
+                        <div class="text-3xl font-extrabold text-orange-400" id="avg-hours">Ø 0</div>
+                        <div class="text-[10px] text-gray-400 uppercase font-bold mt-1">Stunden pro Arbeitstag</div>
                     </div>
                 </div>
             </div>
             
-            <!-- Hours Chart Section -->
-            <div id="hours-chart-section" class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 mb-4 hidden">
-                <h3 class="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-4">Stunden pro Monat</h3>
-                <div class="chart-container" style="height: 250px;">
+            <div id="hours-chart-section" class="bg-[#2e3847] p-8 rounded-2xl shadow-xl border border-[#4b5563] mb-4 hidden">
+                <h3 class="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-6">Stundenübersicht pro Monat</h3>
+                <div class="chart-container" style="height: 300px;">
                     <canvas id="hoursChart"></canvas>
                 </div>
             </div>
@@ -192,65 +217,65 @@
         <!-- CALENDAR VIEW -->
         <div id="calendar-view" class="view-section hidden-right">
             <div id="calendar-content">
-                <div id="calendar-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                    <!-- Months generated via JS -->
+                <div id="calendar-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+                    <!-- JS generated -->
                 </div>
             </div>
         </div>
     </div>
 
     <!-- Navigation -->
-    <nav class="fixed bottom-0 left-0 w-full bg-white border-t border-gray-200 z-40 md:relative md:border-none md:bg-transparent md:w-auto mt-8 no-print shadow-lg md:shadow-none">
-         <div class="flex justify-center md:justify-center gap-4 p-3 md:p-0 max-w-7xl mx-auto">
-             <button id="nav-dashboard" onclick="switchView('dashboard')" class="flex-1 md:flex-none px-6 py-2 rounded-lg font-bold text-sm bg-blue-600 text-white transition shadow-md">
+    <nav class="fixed bottom-0 left-0 w-full bg-[#1a1f26]/80 backdrop-blur-lg border-t border-[#4b5563] z-40 md:relative md:border-none md:bg-transparent md:w-auto mt-12 no-print shadow-2xl md:shadow-none">
+         <div class="flex justify-center gap-4 p-4 md:p-0 max-w-7xl mx-auto">
+             <button id="nav-dashboard" onclick="switchView('dashboard')" class="flex-1 md:flex-none px-8 py-3 rounded-2xl font-bold text-sm bg-blue-600 text-white transition-all shadow-lg shadow-blue-900/20">
                 Dashboard
              </button>
-             <button id="nav-calendar" onclick="switchView('calendar')" class="flex-1 md:flex-none px-6 py-2 rounded-lg font-bold text-sm bg-white text-gray-600 hover:bg-gray-100 transition border border-gray-200 md:border-transparent">
+             <button id="nav-calendar" onclick="switchView('calendar')" class="flex-1 md:flex-none px-8 py-3 rounded-2xl font-bold text-sm bg-[#2e3847] text-gray-300 hover:bg-[#3d4959] transition-all border border-[#4b5563] md:border-transparent">
                 Kalender
              </button>
          </div>
     </nav>
 
-    <!-- CUSTOM MODAL: Entry for Hours -->
-    <div id="hour-entry-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center hidden z-[100] p-4 no-print">
-        <div class="bg-white rounded-2xl shadow-2xl p-6 max-w-sm w-full transform transition-all border border-gray-100">
-            <div class="flex justify-between items-start mb-4">
+    <!-- Hour Entry Modal -->
+    <div id="hour-entry-modal" class="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center hidden z-[100] p-4 no-print">
+        <div class="bg-[#2e3847] rounded-3xl shadow-2xl p-8 max-w-sm w-full transform transition-all border border-[#4b5563]">
+            <div class="flex justify-between items-start mb-6">
                 <div>
-                    <h3 class="text-xl font-bold text-gray-800" id="entry-modal-title">Stunden erfassen</h3>
-                    <p class="text-sm text-gray-500" id="entry-modal-date">Datum</p>
+                    <h3 class="text-2xl font-extrabold text-white" id="entry-modal-title">Stunden erfassen</h3>
+                    <p class="text-sm font-medium text-gray-400 mt-1" id="entry-modal-date">Datum</p>
                 </div>
-                <button onclick="closeEntryModal()" class="text-gray-400 hover:text-gray-600">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                <button onclick="closeEntryModal()" class="text-gray-400 hover:text-white p-1">
+                    <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"></path></svg>
                 </button>
             </div>
             
-            <div class="mb-6">
-                <label class="block text-xs font-bold text-gray-400 uppercase mb-2">Dauer (in Stunden)</label>
-                <input type="number" id="hour-input" step="0.5" min="0.5" max="24" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-lg font-semibold" placeholder="z.B. 8.5">
+            <div class="mb-8">
+                <label class="block text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-3 ml-1">Dauer (h)</label>
+                <input type="number" id="hour-input" step="0.5" min="0.5" max="24" class="w-full px-5 py-4 bg-[#1a1f26] border border-[#4b5563] rounded-2xl focus:ring-4 focus:ring-blue-500/20 focus:border-blue-500 outline-none text-2xl font-bold text-white transition-all" placeholder="0.0">
             </div>
 
-            <div class="flex flex-col gap-2">
-                <button onclick="saveHourEntry()" class="w-full py-3 bg-blue-600 text-white hover:bg-blue-700 rounded-xl font-bold transition shadow-md">
+            <div class="flex flex-col gap-3">
+                <button onclick="saveHourEntry()" class="w-full py-4 bg-blue-600 text-white hover:bg-blue-700 rounded-2xl font-bold transition-all shadow-lg active:scale-95">
                     Speichern
                 </button>
-                <button id="delete-entry-btn" onclick="deleteHourEntry()" class="w-full py-3 bg-red-50 text-red-600 hover:bg-red-100 rounded-xl font-bold transition hidden">
+                <button id="delete-entry-btn" onclick="deleteHourEntry()" class="w-full py-4 bg-red-900/30 text-red-400 hover:bg-red-900/50 rounded-2xl font-bold transition-all active:scale-95">
                     Eintrag löschen
                 </button>
             </div>
         </div>
     </div>
 
-    <!-- CUSTOM MODAL: Confirmation -->
-    <div id="confirm-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center hidden z-[110] p-4 no-print">
-        <div class="bg-white rounded-2xl shadow-xl p-6 max-w-xs w-full text-center">
-            <div class="w-16 h-16 bg-red-100 text-red-600 rounded-full flex items-center justify-center mx-auto mb-4">
-                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+    <!-- Confirm Modal -->
+    <div id="confirm-modal" class="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center hidden z-[110] p-4 no-print">
+        <div class="bg-[#2e3847] rounded-3xl shadow-2xl p-8 max-w-xs w-full text-center border border-[#4b5563]">
+            <div class="w-16 h-16 bg-red-900/20 text-red-500 rounded-full flex items-center justify-center mx-auto mb-5">
+                <svg class="w-9 h-9" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
             </div>
-            <h3 class="text-lg font-bold text-gray-800 mb-2">Wirklich löschen?</h3>
-            <p class="text-sm text-gray-500 mb-6" id="confirm-text">Möchten Sie alle Markierungen für dieses Jahr löschen?</p>
+            <h3 class="text-xl font-extrabold text-white mb-2">Wirklich löschen?</h3>
+            <p class="text-sm font-medium text-gray-400 mb-8" id="confirm-text">Alle Markierungen gehen verloren.</p>
             <div class="flex gap-3">
-                <button onclick="closeConfirmModal()" class="flex-1 py-2 bg-gray-100 text-gray-600 rounded-lg font-semibold">Abbrechen</button>
-                <button id="confirm-action-btn" class="flex-1 py-2 bg-red-600 text-white rounded-lg font-semibold shadow-md">Ja, löschen</button>
+                <button onclick="closeConfirmModal()" class="flex-1 py-3.5 bg-[#3d4959] text-gray-200 rounded-2xl font-bold active:scale-95 transition-all">Abbrechen</button>
+                <button id="confirm-action-btn" class="flex-1 py-3.5 bg-red-600 text-white rounded-2xl font-bold shadow-lg active:scale-95 transition-all">Ja, leeren</button>
             </div>
         </div>
     </div>
@@ -259,21 +284,46 @@
         const months = ["Januar", "Februar", "März", "April", "Mai", "Juni", "Juli", "August", "September", "Oktober", "November", "Dezember"];
         const daysShort = ["Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"];
         
-        // App State
         let currentYear = 2025;
         let isEditMode = false;
-        let markedDates = {}; // Key: YYYY-MM-DD
+        let markedDates = {};
         let charts = { weekday: null, week: null, hours: null };
-        let activeDateStr = null; // Currently editing date
+        let activeDateStr = null;
 
-        // --- Dropdown Logic ---
+        function saveToStorage() {
+            try {
+                localStorage.setItem('calendar_app_data', JSON.stringify(markedDates));
+            } catch (e) {
+                console.warn("Storage restricted.");
+            }
+        }
+
+        function loadFromStorage() {
+            try {
+                const saved = localStorage.getItem('calendar_app_data');
+                if (saved) {
+                    markedDates = JSON.parse(saved);
+                }
+            } catch (e) {
+                console.warn("Storage restricted.");
+                markedDates = {};
+            }
+        }
+
+        function showToast(msg) {
+            const toast = document.getElementById('toast');
+            if (!toast) return;
+            toast.innerText = msg;
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 3000);
+        }
+
         function toggleDropdown(event) {
             event.stopPropagation();
             const dropdown = document.getElementById('actions-dropdown');
-            dropdown.classList.toggle('hidden');
+            if (dropdown) dropdown.classList.toggle('hidden');
         }
 
-        // Close dropdown when clicking away
         window.addEventListener('click', (e) => {
             const dropdown = document.getElementById('actions-dropdown');
             const menuContainer = document.getElementById('menu-container');
@@ -288,21 +338,23 @@
             const btnDash = document.getElementById('nav-dashboard');
             const btnCal = document.getElementById('nav-calendar');
 
+            if (!dash || !cal || !btnDash || !btnCal) return;
+
             if (viewName === 'dashboard') {
                 dash.classList.remove('hidden-left', 'hidden-right');
                 dash.classList.add('active');
                 cal.classList.remove('active');
                 cal.classList.add('hidden-right');
-                btnDash.className = "flex-1 md:flex-none px-6 py-2 rounded-lg font-bold text-sm bg-blue-600 text-white transition shadow-md";
-                btnCal.className = "flex-1 md:flex-none px-6 py-2 rounded-lg font-bold text-sm bg-white text-gray-600 hover:bg-gray-100 transition border border-gray-200 md:border-transparent";
+                btnDash.className = "flex-1 md:flex-none px-8 py-3 rounded-2xl font-bold text-sm bg-blue-600 text-white transition-all shadow-lg shadow-blue-900/20";
+                btnCal.className = "flex-1 md:flex-none px-8 py-3 rounded-2xl font-bold text-sm bg-[#2e3847] text-gray-300 hover:bg-[#3d4959] transition-all border border-[#4b5563] md:border-transparent";
                 updateStats();
             } else {
                 cal.classList.remove('hidden-left', 'hidden-right');
                 cal.classList.add('active');
                 dash.classList.remove('active');
                 dash.classList.add('hidden-left');
-                btnCal.className = "flex-1 md:flex-none px-6 py-2 rounded-lg font-bold text-sm bg-blue-600 text-white transition shadow-md";
-                btnDash.className = "flex-1 md:flex-none px-6 py-2 rounded-lg font-bold text-sm bg-white text-gray-600 hover:bg-gray-100 transition border border-gray-200 md:border-transparent";
+                btnCal.className = "flex-1 md:flex-none px-8 py-3 rounded-2xl font-bold text-sm bg-blue-600 text-white transition-all shadow-lg shadow-blue-900/20";
+                btnDash.className = "flex-1 md:flex-none px-8 py-3 rounded-2xl font-bold text-sm bg-[#2e3847] text-gray-300 hover:bg-[#3d4959] transition-all border border-[#4b5563] md:border-transparent";
             }
         }
 
@@ -312,61 +364,66 @@
             const label = document.getElementById('edit-text-label');
             const container = document.getElementById('calendar-container');
 
+            if (!iconWrapper || !label || !container) return;
+
             if (isEditMode) {
-                iconWrapper.classList.replace('text-gray-400', 'text-red-600');
+                iconWrapper.classList.replace('text-gray-400', 'text-red-400');
                 label.innerText = "Bearbeiten AN";
                 container.classList.add('edit-mode');
+                showToast("Bearbeitungsmodus aktiviert");
             } else {
-                iconWrapper.classList.replace('text-red-600', 'text-gray-400');
+                iconWrapper.classList.replace('text-red-400', 'text-gray-400');
                 label.innerText = "Bearbeiten AUS";
                 container.classList.remove('edit-mode');
             }
-            // Close dropdown after selection
-            document.getElementById('actions-dropdown').classList.add('hidden');
+            const dropdown = document.getElementById('actions-dropdown');
+            if (dropdown) dropdown.classList.add('hidden');
         }
 
         function setYear(year) {
             currentYear = year;
-            const statYear = document.getElementById('stat-year');
-            if (statYear) statYear.innerText = year;
+            const statYearLabel = document.getElementById('stat-year');
+            if (statYearLabel) statYearLabel.innerText = year;
             
             [2025, 2026].forEach(y => {
-                const isActive = y === year;
-                ['btn-'].forEach(prefix => {
-                    const el = document.getElementById(prefix + y);
-                    if (isActive) {
-                        el.className = "px-4 py-2 md:px-6 rounded-lg text-sm font-bold transition bg-blue-600 text-white shadow-md";
+                const el = document.getElementById('btn-' + y);
+                if (el) {
+                    if (y === year) {
+                        el.className = "px-5 py-2 rounded-xl text-sm font-bold transition-all bg-blue-600 text-white shadow-lg shadow-blue-900/20";
                     } else {
-                        el.className = "px-4 py-2 md:px-6 rounded-lg text-sm font-medium transition text-gray-500 hover:text-gray-900";
+                        el.className = "px-5 py-2 rounded-xl text-sm font-semibold transition-all text-gray-400 hover:text-white hover:bg-[#3d4959]";
                     }
-                });
+                }
             });
 
             const hourSection = document.getElementById('hours-chart-section');
-            if (year >= 2026) hourSection.classList.remove('hidden');
-            else hourSection.classList.add('hidden');
+            if (hourSection) {
+                if (year >= 2026) hourSection.classList.remove('hidden');
+                else hourSection.classList.add('hidden');
+            }
             
             initCalendar();
         }
 
         function initCalendar() {
             const grid = document.getElementById('calendar-container');
+            if (!grid) return;
             grid.innerHTML = '';
 
             months.forEach((monthName, index) => {
                 const monthDiv = document.createElement('div');
-                monthDiv.className = "bg-white p-4 rounded-xl shadow-sm border border-gray-100 break-inside-avoid flex flex-col";
+                monthDiv.className = "bg-[#2e3847] p-6 rounded-3xl shadow-xl border border-[#4b5563] break-inside-avoid flex flex-col hover:shadow-2xl transition-all duration-300";
                 
                 const title = document.createElement('h2');
-                title.className = "text-sm font-bold text-gray-800 mb-3 text-center";
+                title.className = "text-base font-bold text-white mb-5 text-center uppercase tracking-wide";
                 title.innerText = monthName;
                 monthDiv.appendChild(title);
 
                 const daysHeader = document.createElement('div');
-                daysHeader.className = "grid grid-cols-7 gap-1 mb-2";
+                daysHeader.className = "grid grid-cols-7 gap-1 mb-3";
                 daysShort.forEach(day => {
                     const d = document.createElement('div');
-                    d.className = "text-center text-[10px] font-semibold text-gray-400";
+                    d.className = "text-center text-[11px] font-bold text-gray-500 uppercase";
                     d.innerText = day;
                     daysHeader.appendChild(d);
                 });
@@ -378,7 +435,6 @@
                 const firstDay = new Date(currentYear, index, 1);
                 let startDay = firstDay.getDay(); 
                 startDay = (startDay === 0) ? 6 : startDay - 1;
-
                 const daysInMonth = new Date(currentYear, index + 1, 0).getDate();
 
                 for (let i = 0; i < startDay; i++) daysGrid.appendChild(document.createElement('div'));
@@ -386,23 +442,20 @@
                 for (let d = 1; d <= daysInMonth; d++) {
                     const dateStr = `${currentYear}-${String(index + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
                     const cell = document.createElement('div');
-                    cell.className = "day-cell text-xs text-gray-700";
+                    cell.className = "day-cell text-sm font-medium";
                     cell.innerText = d;
                     
                     if (markedDates[dateStr]) {
                         cell.classList.add('marked');
                         if (currentYear >= 2026 && markedDates[dateStr].hours) {
-                            cell.innerHTML = `${d}<br><span class="text-[8px] opacity-90">${markedDates[dateStr].hours}h</span>`;
-                            cell.style.lineHeight = "1.1";
-                            cell.style.flexDirection = "column";
+                            cell.innerHTML = `<span>${d}</span><span class="text-[9px] mt-0.5 opacity-90 text-white">${markedDates[dateStr].hours}h</span>`;
+                            cell.style.lineHeight = "1";
                         }
                     }
 
                     cell.onclick = (e) => {
                         e.preventDefault();
-                        if (isEditMode) {
-                            handleCellClick(dateStr);
-                        }
+                        if (isEditMode) handleCellClick(dateStr);
                     };
                     daysGrid.appendChild(cell);
                 }
@@ -418,6 +471,7 @@
             } else {
                 if (markedDates[dateStr]) delete markedDates[dateStr];
                 else markedDates[dateStr] = { hours: null };
+                saveToStorage();
                 initCalendar(); 
             }
         }
@@ -428,36 +482,45 @@
             const dateObj = new Date(dateStr);
             const dateLabel = dateObj.toLocaleDateString('de-DE', { day: '2-digit', month: 'long', year: 'numeric' });
             
-            document.getElementById('entry-modal-date').innerText = dateLabel;
+            const dateLabelEl = document.getElementById('entry-modal-date');
             const input = document.getElementById('hour-input');
-            input.value = data ? data.hours : '';
-            
             const delBtn = document.getElementById('delete-entry-btn');
-            if (data) delBtn.classList.remove('hidden');
-            else delBtn.classList.add('hidden');
+            
+            if (dateLabelEl) dateLabelEl.innerText = dateLabel;
+            if (input) input.value = data ? data.hours : '';
+            if (delBtn) {
+                if (data) delBtn.classList.remove('hidden');
+                else delBtn.classList.add('hidden');
+            }
 
-            document.getElementById('hour-entry-modal').classList.remove('hidden');
-            input.focus();
+            const modal = document.getElementById('hour-entry-modal');
+            if (modal) {
+                modal.classList.remove('hidden');
+                if (input) setTimeout(() => input.focus(), 100);
+            }
         }
 
         function closeEntryModal() {
-            document.getElementById('hour-entry-modal').classList.add('hidden');
+            const modal = document.getElementById('hour-entry-modal');
+            if (modal) modal.classList.add('hidden');
             activeDateStr = null;
         }
 
         function saveHourEntry() {
             if (!activeDateStr) return;
-            let val = document.getElementById('hour-input').value;
+            const input = document.getElementById('hour-input');
+            let val = input ? input.value : '';
             if (val === '') {
                 delete markedDates[activeDateStr];
             } else {
                 let h = parseFloat(val.toString().replace(',', '.'));
                 if (isNaN(h) || h < 0.1 || h > 24) {
-                    alert("Bitte eine Zahl zwischen 0.1 und 24 eingeben.");
+                    showToast("Bitte 0.1 - 24 h eingeben.");
                     return;
                 }
                 markedDates[activeDateStr] = { hours: h };
             }
+            saveToStorage();
             initCalendar();
             closeEntryModal();
         }
@@ -465,83 +528,168 @@
         function deleteHourEntry() {
             if (activeDateStr) {
                 delete markedDates[activeDateStr];
+                saveToStorage();
                 initCalendar();
                 closeEntryModal();
             }
         }
 
         function triggerClear() {
-            document.getElementById('confirm-text').innerText = `Möchten Sie alle Markierungen für das Jahr ${currentYear} wirklich löschen?`;
+            const confirmText = document.getElementById('confirm-text');
+            if (confirmText) confirmText.innerText = `Alle Markierungen für ${currentYear} löschen?`;
+            
             const modal = document.getElementById('confirm-modal');
             const btn = document.getElementById('confirm-action-btn');
-            modal.classList.remove('hidden');
+            if (modal) modal.classList.remove('hidden');
             
-            btn.onclick = () => {
-                Object.keys(markedDates).forEach(date => {
-                    if (date.startsWith(String(currentYear))) delete markedDates[date];
-                });
-                initCalendar();
-                closeConfirmModal();
-            };
-            document.getElementById('actions-dropdown').classList.add('hidden');
+            if (btn) {
+                btn.onclick = () => {
+                    Object.keys(markedDates).forEach(date => {
+                        if (date.startsWith(String(currentYear))) delete markedDates[date];
+                    });
+                    saveToStorage();
+                    initCalendar();
+                    closeConfirmModal();
+                    showToast("Jahr geleert");
+                };
+            }
+            const dropdown = document.getElementById('actions-dropdown');
+            if (dropdown) dropdown.classList.add('hidden');
         }
 
         function closeConfirmModal() {
-            document.getElementById('confirm-modal').classList.add('hidden');
+            const modal = document.getElementById('confirm-modal');
+            if (modal) modal.classList.add('hidden');
         }
 
         function updateStats() {
             const currentYearKeys = Object.keys(markedDates).filter(d => d.startsWith(String(currentYear)));
-            document.getElementById('total-count').innerText = currentYearKeys.length;
+            const totalCountEl = document.getElementById('total-count');
+            if (totalCountEl) totalCountEl.innerText = currentYearKeys.length;
+            
             const weekdayCounts = new Array(7).fill(0); 
             const weekCounts = new Array(54).fill(0); 
             const monthHours = new Array(12).fill(0);
+            
             let totalHours = 0;
+            let daysWithHoursCount = 0;
 
             currentYearKeys.forEach(dateStr => {
                 const dateObj = new Date(dateStr);
                 weekdayCounts[dateObj.getDay()]++;
                 weekCounts[getISOWeek(dateStr)]++;
+                
                 if (currentYear >= 2026) {
                     const h = markedDates[dateStr].hours || 0;
                     monthHours[dateObj.getMonth()] += h;
                     totalHours += h;
+                    if (h > 0) daysWithHoursCount++;
                 }
             });
             
             const hoursStatsDiv = document.getElementById('hours-stats');
+            const avgHoursEl = document.getElementById('avg-hours');
             if (currentYear >= 2026) {
-                hoursStatsDiv.classList.remove('hidden');
-                const avg = currentYearKeys.length > 0 ? (totalHours / currentYearKeys.length) : 0;
-                document.getElementById('avg-hours').innerText = 'Ø ' + parseFloat(avg.toFixed(1)) + ' h';
-            } else hoursStatsDiv.classList.add('hidden');
+                if (hoursStatsDiv) hoursStatsDiv.classList.remove('hidden');
+                const avg = daysWithHoursCount > 0 ? (totalHours / daysWithHoursCount) : 0;
+                if (avgHoursEl) avgHoursEl.innerText = 'Ø ' + parseFloat(avg.toFixed(1)) + ' h';
+            } else {
+                if (hoursStatsDiv) hoursStatsDiv.classList.add('hidden');
+            }
 
             renderCharts(weekdayCounts, weekCounts, monthHours);
         }
 
         function renderCharts(weekdayCounts, weekCounts, monthHours) {
-            const chartConfig = { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, animation: { duration: 600 } };
-            if (charts.week) charts.week.destroy();
-            charts.week = new Chart(document.getElementById('weekChart'), {
-                type: 'line',
-                data: { labels: Array.from({length: 53}, (_, i) => i + 1), datasets: [{ data: weekCounts.slice(1, 54), borderColor: '#10b981', backgroundColor: 'rgba(16, 185, 129, 0.1)', fill: true, tension: 0.3, pointRadius: 0 }] },
-                options: { ...chartConfig, scales: { y: { beginAtZero: true, ticks: { precision: 0 } }, x: { ticks: { font: { size: 8 }, autoSkip: true, maxTicksLimit: 12 } } } }
-            });
+            const chartConfig = { 
+                responsive: true, 
+                maintainAspectRatio: false, 
+                plugins: { legend: { display: false } }, 
+                animation: { duration: 400 } 
+            };
+            
+            const textColor = '#9ca3af';
+            const gridColor = 'rgba(255, 255, 255, 0.05)';
 
-            if (charts.weekday) charts.weekday.destroy();
-            charts.weekday = new Chart(document.getElementById('weekdayChart'), {
-                type: 'bar',
-                data: { labels: ["Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"], datasets: [{ data: [weekdayCounts[1], weekdayCounts[2], weekdayCounts[3], weekdayCounts[4], weekdayCounts[5], weekdayCounts[6], weekdayCounts[0]], backgroundColor: '#3b82f6', borderRadius: 4 }] },
-                options: { ...chartConfig, scales: { y: { beginAtZero: true, ticks: { precision: 0 } }, x: { ticks: { font: { size: 9 } } } } }
-            });
+            // Helper to safe-get canvas context
+            const getCtx = (id) => {
+                const el = document.getElementById(id);
+                return el ? el.getContext('2d') : null;
+            };
+
+            const ctxWeek = getCtx('weekChart');
+            if (ctxWeek) {
+                if (charts.week) charts.week.destroy();
+                charts.week = new Chart(ctxWeek, {
+                    type: 'line',
+                    data: { 
+                        labels: Array.from({length: 53}, (_, i) => i + 1), 
+                        datasets: [{ 
+                            data: weekCounts.slice(1, 54), 
+                            borderColor: '#10b981', 
+                            backgroundColor: 'rgba(16, 185, 129, 0.1)', 
+                            fill: true, 
+                            tension: 0.4, 
+                            pointRadius: 0,
+                            borderWidth: 3
+                        }] 
+                    },
+                    options: { 
+                        ...chartConfig, 
+                        scales: { 
+                            y: { beginAtZero: true, grid: { color: gridColor }, ticks: { color: textColor, precision: 0 } }, 
+                            x: { grid: { display: false }, ticks: { color: textColor, font: { size: 9 }, autoSkip: true, maxTicksLimit: 12 } } 
+                        } 
+                    }
+                });
+            }
+
+            const ctxWeekday = getCtx('weekdayChart');
+            if (ctxWeekday) {
+                if (charts.weekday) charts.weekday.destroy();
+                charts.weekday = new Chart(ctxWeekday, {
+                    type: 'bar',
+                    data: { 
+                        labels: ["Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"], 
+                        datasets: [{ 
+                            data: [weekdayCounts[1], weekdayCounts[2], weekdayCounts[3], weekdayCounts[4], weekdayCounts[5], weekdayCounts[6], weekdayCounts[0]], 
+                            backgroundColor: '#3b82f6', 
+                            borderRadius: 6 
+                        }] 
+                    },
+                    options: { 
+                        ...chartConfig, 
+                        scales: { 
+                            y: { beginAtZero: true, grid: { color: gridColor }, ticks: { color: textColor, precision: 0 } }, 
+                            x: { grid: { display: false }, ticks: { color: textColor, font: { size: 10, weight: 'bold' } } } 
+                        } 
+                    }
+                });
+            }
             
             if (currentYear >= 2026) {
-                if (charts.hours) charts.hours.destroy();
-                charts.hours = new Chart(document.getElementById('hoursChart'), {
-                    type: 'bar',
-                    data: { labels: months, datasets: [{ label: 'Stunden', data: monthHours, backgroundColor: '#f59e0b', borderRadius: 4 }] },
-                    options: { ...chartConfig, scales: { y: { beginAtZero: true }, x: { ticks: { font: { size: 9 } } } } }
-                });
+                const ctxHours = getCtx('hoursChart');
+                if (ctxHours) {
+                    if (charts.hours) charts.hours.destroy();
+                    charts.hours = new Chart(ctxHours, {
+                        type: 'bar',
+                        data: { 
+                            labels: months.map(m => m.substring(0, 3)), 
+                            datasets: [{ 
+                                data: monthHours, 
+                                backgroundColor: '#f59e0b', 
+                                borderRadius: 8 
+                            }] 
+                        },
+                        options: { 
+                            ...chartConfig, 
+                            scales: { 
+                                y: { beginAtZero: true, grid: { color: gridColor }, ticks: { color: textColor } }, 
+                                x: { grid: { display: false }, ticks: { color: textColor, font: { size: 11, weight: 'bold' } } } 
+                            } 
+                        }
+                    });
+                }
             }
         }
 
@@ -555,10 +703,20 @@
         }
 
         function downloadPDF() {
+            showToast("PDF wird erstellt...");
             const element = document.getElementById('calendar-content');
-            const opt = { margin: [10, 10], filename: `Kalender_${currentYear}.pdf`, image: { type: 'jpeg', quality: 0.98 }, html2canvas: { scale: 2, useCORS: true, ignoreElements: (el) => el.classList.contains('no-print') }, jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' } };
-            html2pdf().set(opt).from(element).save();
-            document.getElementById('actions-dropdown').classList.add('hidden');
+            if (!element) return;
+            const opt = { 
+                margin: [10, 10], 
+                filename: `Kalender_${currentYear}.pdf`, 
+                image: { type: 'jpeg', quality: 0.98 }, 
+                html2canvas: { scale: 2, useCORS: true, backgroundColor: '#1a1f26' }, 
+                jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' } 
+            };
+            html2pdf().set(opt).from(element).save().then(() => {
+                const dropdown = document.getElementById('actions-dropdown');
+                if (dropdown) dropdown.classList.add('hidden');
+            });
         }
 
         function downloadJSON() {
@@ -567,10 +725,12 @@
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = `kalender_backup.json`;
+            a.download = `kalender_backup_${new Date().toISOString().split('T')[0]}.json`;
             a.click();
             URL.revokeObjectURL(url);
-            document.getElementById('actions-dropdown').classList.add('hidden');
+            const dropdown = document.getElementById('actions-dropdown');
+            if (dropdown) dropdown.classList.add('hidden');
+            showToast("Backup heruntergeladen");
         }
 
         function uploadJSON(input) {
@@ -584,12 +744,15 @@
                         markedDates = {};
                         imported.forEach(d => { markedDates[d] = { hours: null }; });
                     } else if (typeof imported === 'object') markedDates = imported;
+                    saveToStorage();
                     initCalendar();
-                } catch (err) { alert("Datei konnte nicht gelesen werden."); }
+                    showToast("Daten importiert");
+                } catch (err) { showToast("Fehler beim Import"); }
                 input.value = '';
             };
             reader.readAsText(file);
-            document.getElementById('actions-dropdown').classList.add('hidden');
+            const dropdown = document.getElementById('actions-dropdown');
+            if (dropdown) dropdown.classList.add('hidden');
         }
         
         let touchStartX = 0;
@@ -597,16 +760,26 @@
         document.getElementById('main-viewport').addEventListener('touchend', e => {
             const touchEndX = e.changedTouches[0].screenX;
             const diff = touchEndX - touchStartX;
-            if (Math.abs(diff) > 100) {
-                if (diff < 0 && document.getElementById('dashboard-view').classList.contains('active')) switchView('calendar');
-                if (diff > 0 && document.getElementById('calendar-view').classList.contains('active')) switchView('dashboard');
+            if (Math.abs(diff) > 80) {
+                const dashView = document.getElementById('dashboard-view');
+                const calView = document.getElementById('calendar-view');
+                if (diff < 0 && dashView && dashView.classList.contains('active')) switchView('calendar');
+                if (diff > 0 && calView && calView.classList.contains('active')) switchView('dashboard');
             }
         }, {passive: true});
 
-        window.onload = function() {
+        // Main Initialization
+        function initApp() {
+            loadFromStorage();
             setYear(2025);
             switchView('dashboard');
-        };
+        }
+
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initApp);
+        } else {
+            initApp();
+        }
     </script>
 </body>
 </html>
