@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="de" class="scroll-smooth">
+<html lang="de" class="scroll-smooth scroll-pt-[100px]">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
@@ -151,12 +151,12 @@
         .menu-item svg { width: 1.25rem; height: 1.25rem; color: #9ca3af; margin-right: 0.75rem; flex-shrink: 0; }
     </style>
 </head>
-<body class="min-h-screen p-4 md:p-8 pt-24 pb-24">
+<body class="min-h-screen p-4 md:p-8 pt-24 md:pt-28 pb-24 md:pb-28">
 
     <div id="toast" class="toast-notification">Nachricht</div>
 
-    <!-- Navigation (NOW AT TOP) -->
-    <nav class="fixed top-0 left-0 w-full bg-[#1a1f26]/95 backdrop-blur-xl border-b border-[#4b5563] z-40 no-print shadow-xl">
+    <!-- Top Navigation (Fixed) -->
+    <nav class="fixed top-0 left-0 w-full bg-[#1a1f26]/95 backdrop-blur-xl border-b border-[#4b5563] z-50 no-print shadow-xl">
          <div class="flex justify-center gap-4 p-4 max-w-7xl mx-auto">
              <button id="nav-dashboard" onclick="switchView('dashboard')" class="flex-1 md:flex-none px-8 py-3 rounded-2xl font-bold text-sm bg-blue-600 text-white transition-all shadow-lg shadow-blue-900/20 active:scale-95">
                 Dashboard
@@ -167,7 +167,8 @@
          </div>
     </nav>
 
-    <div id="main-viewport" class="max-w-7xl mx-auto relative">
+    <!-- Main Content Wrapper with z-0 to respect fixed nav -->
+    <div id="main-viewport" class="max-w-7xl mx-auto relative z-0">
 
         <!-- DASHBOARD VIEW -->
         <div id="dashboard-view" class="view-section active">
@@ -214,8 +215,8 @@
         </div>
     </div>
 
-    <!-- Header (NOW AT BOTTOM) -->
-    <header class="fixed bottom-0 left-0 w-full bg-[#1a1f26]/95 backdrop-blur-xl border-t border-[#4b5563] z-40 no-print shadow-2xl">
+    <!-- Bottom Controls (Fixed) -->
+    <header class="fixed bottom-0 left-0 w-full bg-[#1a1f26]/95 backdrop-blur-xl border-t border-[#4b5563] z-50 no-print shadow-2xl">
         <div class="max-w-7xl mx-auto p-4 flex flex-row justify-between items-center gap-2">
             <!-- Year Selector -->
             <div class="flex bg-[#2e3847] rounded-2xl p-1 shadow-lg border border-[#4b5563]">
@@ -224,7 +225,7 @@
             </div>
 
             <div class="flex items-center gap-2">
-                <!-- Standalone Edit Button -->
+                <!-- Edit Toggle Button -->
                 <button id="edit-toggle-btn" onclick="toggleEditMode()" class="inline-flex justify-center items-center rounded-2xl border border-[#4b5563] shadow-lg p-2.5 bg-[#2e3847] text-gray-200 hover:bg-[#3d4959] focus:outline-none transition-all" aria-label="Bearbeiten">
                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/>
@@ -232,7 +233,7 @@
                     </svg>
                 </button>
 
-                <!-- Settings Menu Container -->
+                <!-- Settings Dropup Menu -->
                 <div class="relative inline-block text-left" id="menu-container">
                     <button onclick="toggleDropdown(event)" class="inline-flex justify-center items-center rounded-2xl border border-[#4b5563] shadow-lg p-2.5 bg-[#2e3847] text-gray-200 hover:bg-[#3d4959] focus:outline-none transition-all" aria-label="Einstellungen">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -241,7 +242,6 @@
                         </svg>
                     </button>
 
-                    <!-- Menu opens UPWARD now -->
                     <div id="actions-dropdown" class="hidden absolute right-0 bottom-full z-[60] mb-2 w-60 rounded-2xl shadow-2xl focus:outline-none overflow-hidden">
                         <div class="py-0 flex flex-col">
                             <button onclick="downloadPDF()" class="menu-item">
@@ -276,7 +276,7 @@
         </div>
     </header>
 
-    <!-- Modals (Hour Entry / Confirm) -->
+    <!-- Modals -->
     <div id="hour-entry-modal" class="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center hidden z-[100] p-4 no-print">
         <div class="bg-[#2e3847] rounded-3xl shadow-2xl p-8 max-w-sm w-full transform transition-all border border-[#4b5563]">
             <div class="flex justify-between items-start mb-6">
@@ -397,7 +397,9 @@
                     const now = new Date();
                     if (currentYear === now.getFullYear()) {
                         const card = document.getElementById('current-month-card');
-                        if (card) card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                        if (card) {
+                            card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                        }
                     }
                 }
             }, 400);
