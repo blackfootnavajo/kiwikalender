@@ -1,4 +1,4 @@
-Kalender 2025/2026
+Kalender 2025-2027
 
 Ein interaktiver Web-Kalender zur Nachverfolgung von Ereignissen oder Terminen mit integrierten Statistiken und Exportfunktionen.
 
@@ -22,7 +22,7 @@ JSON Export/Import: Speichern Sie Ihren Fortschritt in einer lokalen Datei und l
 
 PDF-Export: Erstellen Sie ein druckfertiges Dokument Ihres Kalenders im Querformat.
 
-Jahresansicht: Wechseln Sie nahtlos zwischen den Jahren 2025 und 2026.
+Jahresansicht: Wechseln Sie nahtlos zwischen den Jahren 2025, 2026 und 2027.
 
 Bedienung
 
