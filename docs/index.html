@@ -1,8 +1,8 @@
 <!DOCTYPE html>
-<html lang="de">
+<html lang="de" class="scroll-smooth">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
     <title>Kalender 2025/2026</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- External Libraries -->
@@ -10,16 +10,26 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+        
+        :root {
+            --bg-dark: #1a1f26;
+            --card-dark: #2e3847;
+            --border-dark: #4b5563;
+        }
+
         body { 
             font-family: 'Inter', sans-serif; 
             -webkit-tap-highlight-color: transparent; 
-            background-color: #1a1f26;
+            background-color: var(--bg-dark);
             color: #f3f4f6;
+            /* Strict horizontal scroll prevention */
             overflow-x: hidden;
+            width: 100%;
+            position: relative;
         }
         
         @media print {
-            body { -webkit-print-color-adjust: exact; print-color-adjust: exact; background-color: white; color: black; }
+            body { -webkit-print-color-adjust: exact; print-color-adjust: exact; background-color: white; color: black; overflow: visible; }
             .no-print { display: none !important; }
             .max-w-7xl { max-width: 100% !important; margin: 0 !important; padding: 0 !important; }
             .bg-[#2e3847] { background-color: white !important; border: 1px solid #e5e7eb !important; }
@@ -58,28 +68,41 @@
             width: 100%;
         }
         
-        /* Smooth View Transitions */
+        /* Fixed View Transition System */
+        #main-viewport {
+            width: 100%;
+            overflow: hidden; /* Clips horizontal movement during swipe */
+        }
+
         .view-section {
             width: 100%;
             transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.4s ease-in-out;
-            position: absolute;
-            top: 0;
-            left: 0;
             opacity: 0;
             pointer-events: none;
+            visibility: hidden;
+            display: none; /* Removed from flow entirely when inactive */
         }
         
         .view-section.active {
+            display: block;
             opacity: 1;
             pointer-events: auto;
-            position: relative;
-            transform: translateX(0);
+            position: relative; 
+            transform: translateX(0) !important;
+            visibility: visible;
         }
 
-        .view-section.hidden-right { transform: translateX(30px); }
-        .view-section.hidden-left { transform: translateX(-30px); }
+        /* Classes used during transition */
+        .view-section.sliding {
+            display: block;
+            position: absolute;
+            top: 0;
+            left: 0;
+        }
 
-        /* Custom Scrollbar */
+        .view-section.hidden-right { transform: translateX(100%); }
+        .view-section.hidden-left { transform: translateX(-100%); }
+
         ::-webkit-scrollbar { width: 6px; }
         ::-webkit-scrollbar-track { background: #1a1f26; }
         ::-webkit-scrollbar-thumb { background: #4b5563; border-radius: 10px; }
@@ -91,12 +114,7 @@
             background-color: #2e3847;
             border: 1px solid #4b5563;
         }
-        #actions-dropdown.hidden {
-            display: none;
-            opacity: 0;
-            transform: scale(0.95);
-        }
-
+        
         .toast-notification {
             position: fixed;
             bottom: 100px;
@@ -114,13 +132,29 @@
             pointer-events: none;
             transition: all 0.3s ease;
         }
-        .toast-notification.show {
-            opacity: 1;
-            bottom: 120px;
+        .toast-notification.show { opacity: 1; bottom: 120px; }
+        
+        .current-month-highlight {
+            border-color: #3b82f6 !important;
+            box-shadow: 0 0 20px rgba(59, 130, 246, 0.2);
         }
+
+        .menu-item {
+            display: flex;
+            align-items: center;
+            width: 100%;
+            padding: 0.875rem 1rem;
+            font-size: 0.875rem;
+            color: #e5e7eb;
+            transition: background-color 0.2s;
+            border-bottom: 1px solid #4b5563;
+            text-align: left;
+        }
+        .menu-item:hover { background-color: #3d4959; }
+        .menu-item svg { width: 1.25rem; height: 1.25rem; color: #9ca3af; margin-right: 0.75rem; flex-shrink: 0; }
     </style>
 </head>
-<body class="min-h-screen p-4 md:p-8 pb-24 md:pb-8">
+<body class="min-h-screen p-4 md:p-8 pb-32 md:pb-12">
 
     <div id="toast" class="toast-notification">Nachricht</div>
 
@@ -139,45 +173,43 @@
                 </svg>
             </button>
 
-            <div id="actions-dropdown" class="hidden absolute right-0 z-[60] mt-2 w-64 rounded-2xl shadow-2xl focus:outline-none overflow-hidden">
-                <div class="py-1">
-                    <button onclick="toggleEditMode()" class="group flex items-center w-full px-4 py-3.5 text-sm text-gray-200 hover:bg-[#3d4959] transition border-b border-[#4b5563]">
-                        <span id="edit-icon-wrapper" class="mr-3 text-gray-400 transition">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg>
-                        </span>
+            <div id="actions-dropdown" class="hidden absolute right-0 z-[60] mt-2 w-60 rounded-2xl shadow-2xl focus:outline-none overflow-hidden">
+                <div class="py-0 flex flex-col">
+                    <button onclick="toggleEditMode()" class="menu-item">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg>
                         <span id="edit-text-label" class="font-medium">Bearbeiten AUS</span>
                     </button>
-                    <button onclick="downloadPDF()" class="group flex items-center w-full px-4 py-3.5 text-sm text-gray-200 hover:bg-[#3d4959] transition">
-                        <svg class="mr-3 h-5 w-5 text-gray-400 group-hover:text-red-400 transition-colors" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <button onclick="downloadPDF()" class="menu-item">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
                         </svg>
-                        PDF Export
+                        <span>PDF Export</span>
                     </button>
-                    <button onclick="downloadJSON()" class="group flex items-center w-full px-4 py-3.5 text-sm text-gray-200 hover:bg-[#3d4959] transition">
-                        <svg class="mr-3 h-5 w-5 text-gray-400 group-hover:text-emerald-400 transition-colors" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <button onclick="downloadJSON()" class="menu-item">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
                         </svg>
-                        JSON Export (Backup)
+                        <span>JSON Export</span>
                     </button>
-                    <label class="group flex items-center w-full px-4 py-3.5 text-sm text-gray-200 hover:bg-[#3d4959] transition cursor-pointer">
-                        <svg class="mr-3 h-5 w-5 text-gray-400 group-hover:text-blue-400 transition-colors" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <label class="menu-item cursor-pointer">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0l-4 4m4-4v12" />
                         </svg>
-                        Laden / Import
+                        <span class="flex-1">JSON Import</span>
                         <input type="file" accept=".json" class="hidden" onchange="uploadJSON(this)">
                     </label>
-                    <button onclick="triggerClear()" class="group flex items-center w-full px-4 py-3.5 text-sm text-gray-200 hover:bg-red-900/30 hover:text-red-400 transition">
-                        <svg class="mr-3 h-5 w-5 text-gray-400 group-hover:text-red-500 transition-colors" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <button onclick="triggerClear()" class="menu-item !border-b-0 hover:bg-red-900/30 text-red-400 group">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="group-hover:text-red-400">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                         </svg>
-                        Jahr leeren
+                        <span>Jahr leeren</span>
                     </button>
                 </div>
             </div>
         </div>
     </header>
 
-    <div id="main-viewport" class="max-w-7xl mx-auto relative overflow-hidden min-h-[80vh]">
+    <div id="main-viewport" class="max-w-7xl mx-auto relative">
 
         <!-- DASHBOARD VIEW -->
         <div id="dashboard-view" class="view-section active">
@@ -207,7 +239,7 @@
             </div>
             
             <div id="hours-chart-section" class="bg-[#2e3847] p-8 rounded-2xl shadow-xl border border-[#4b5563] mb-4 hidden">
-                <h3 class="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-6">Stundenübersicht pro Monat</h3>
+                <h3 class="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-6">Stundenübersicht pro Woche</h3>
                 <div class="chart-container" style="height: 300px;">
                     <canvas id="hoursChart"></canvas>
                 </div>
@@ -215,7 +247,7 @@
         </div>
 
         <!-- CALENDAR VIEW -->
-        <div id="calendar-view" class="view-section hidden-right">
+        <div id="calendar-view" class="view-section">
             <div id="calendar-content">
                 <div id="calendar-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
                     <!-- JS generated -->
@@ -225,18 +257,18 @@
     </div>
 
     <!-- Navigation -->
-    <nav class="fixed bottom-0 left-0 w-full bg-[#1a1f26]/80 backdrop-blur-lg border-t border-[#4b5563] z-40 md:relative md:border-none md:bg-transparent md:w-auto mt-12 no-print shadow-2xl md:shadow-none">
+    <nav class="fixed bottom-0 left-0 w-full bg-[#1a1f26]/95 backdrop-blur-xl border-t border-[#4b5563] z-40 md:relative md:border-none md:bg-transparent md:w-auto mt-12 no-print shadow-2xl md:shadow-none">
          <div class="flex justify-center gap-4 p-4 md:p-0 max-w-7xl mx-auto">
-             <button id="nav-dashboard" onclick="switchView('dashboard')" class="flex-1 md:flex-none px-8 py-3 rounded-2xl font-bold text-sm bg-blue-600 text-white transition-all shadow-lg shadow-blue-900/20">
+             <button id="nav-dashboard" onclick="switchView('dashboard')" class="flex-1 md:flex-none px-8 py-3 rounded-2xl font-bold text-sm bg-blue-600 text-white transition-all shadow-lg shadow-blue-900/20 active:scale-95">
                 Dashboard
              </button>
-             <button id="nav-calendar" onclick="switchView('calendar')" class="flex-1 md:flex-none px-8 py-3 rounded-2xl font-bold text-sm bg-[#2e3847] text-gray-300 hover:bg-[#3d4959] transition-all border border-[#4b5563] md:border-transparent">
+             <button id="nav-calendar" onclick="switchView('calendar')" class="flex-1 md:flex-none px-8 py-3 rounded-2xl font-bold text-sm bg-[#2e3847] text-gray-300 hover:bg-[#3d4959] transition-all border border-[#4b5563] md:border-transparent active:scale-95">
                 Kalender
              </button>
          </div>
     </nav>
 
-    <!-- Hour Entry Modal -->
+    <!-- Modals -->
     <div id="hour-entry-modal" class="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center hidden z-[100] p-4 no-print">
         <div class="bg-[#2e3847] rounded-3xl shadow-2xl p-8 max-w-sm w-full transform transition-all border border-[#4b5563]">
             <div class="flex justify-between items-start mb-6">
@@ -244,28 +276,21 @@
                     <h3 class="text-2xl font-extrabold text-white" id="entry-modal-title">Stunden erfassen</h3>
                     <p class="text-sm font-medium text-gray-400 mt-1" id="entry-modal-date">Datum</p>
                 </div>
-                <button onclick="closeEntryModal()" class="text-gray-400 hover:text-white p-1">
+                <button onclick="closeEntryModal()" class="text-gray-400 hover:text-white p-1 transition-colors">
                     <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"></path></svg>
                 </button>
             </div>
-            
             <div class="mb-8">
                 <label class="block text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-3 ml-1">Dauer (h)</label>
                 <input type="number" id="hour-input" step="0.5" min="0.5" max="24" class="w-full px-5 py-4 bg-[#1a1f26] border border-[#4b5563] rounded-2xl focus:ring-4 focus:ring-blue-500/20 focus:border-blue-500 outline-none text-2xl font-bold text-white transition-all" placeholder="0.0">
             </div>
-
             <div class="flex flex-col gap-3">
-                <button onclick="saveHourEntry()" class="w-full py-4 bg-blue-600 text-white hover:bg-blue-700 rounded-2xl font-bold transition-all shadow-lg active:scale-95">
-                    Speichern
-                </button>
-                <button id="delete-entry-btn" onclick="deleteHourEntry()" class="w-full py-4 bg-red-900/30 text-red-400 hover:bg-red-900/50 rounded-2xl font-bold transition-all active:scale-95">
-                    Eintrag löschen
-                </button>
+                <button onclick="saveHourEntry()" class="w-full py-4 bg-blue-600 text-white hover:bg-blue-700 rounded-2xl font-bold transition-all shadow-lg active:scale-95">Speichern</button>
+                <button id="delete-entry-btn" onclick="deleteHourEntry()" class="w-full py-4 bg-red-900/30 text-red-400 hover:bg-red-900/50 rounded-2xl font-bold transition-all active:scale-95">Eintrag löschen</button>
             </div>
         </div>
     </div>
 
-    <!-- Confirm Modal -->
     <div id="confirm-modal" class="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center hidden z-[110] p-4 no-print">
         <div class="bg-[#2e3847] rounded-3xl shadow-2xl p-8 max-w-xs w-full text-center border border-[#4b5563]">
             <div class="w-16 h-16 bg-red-900/20 text-red-500 rounded-full flex items-center justify-center mx-auto mb-5">
@@ -291,23 +316,14 @@
         let activeDateStr = null;
 
         function saveToStorage() {
-            try {
-                localStorage.setItem('calendar_app_data', JSON.stringify(markedDates));
-            } catch (e) {
-                console.warn("Storage restricted.");
-            }
+            try { localStorage.setItem('calendar_app_data', JSON.stringify(markedDates)); } catch (e) {}
         }
 
         function loadFromStorage() {
             try {
                 const saved = localStorage.getItem('calendar_app_data');
-                if (saved) {
-                    markedDates = JSON.parse(saved);
-                }
-            } catch (e) {
-                console.warn("Storage restricted.");
-                markedDates = {};
-            }
+                if (saved) markedDates = JSON.parse(saved);
+            } catch (e) { markedDates = {}; }
         }
 
         function showToast(msg) {
@@ -320,16 +336,13 @@
 
         function toggleDropdown(event) {
             event.stopPropagation();
-            const dropdown = document.getElementById('actions-dropdown');
-            if (dropdown) dropdown.classList.toggle('hidden');
+            document.getElementById('actions-dropdown')?.classList.toggle('hidden');
         }
 
         window.addEventListener('click', (e) => {
             const dropdown = document.getElementById('actions-dropdown');
             const menuContainer = document.getElementById('menu-container');
-            if (dropdown && menuContainer && !menuContainer.contains(e.target)) {
-                dropdown.classList.add('hidden');
-            }
+            if (dropdown && !menuContainer.contains(e.target)) dropdown.classList.add('hidden');
         });
 
         function switchView(viewName) {
@@ -339,69 +352,77 @@
             const btnCal = document.getElementById('nav-calendar');
 
             if (!dash || !cal || !btnDash || !btnCal) return;
+            
+            const isGoingToDash = viewName === 'dashboard';
+            const incoming = isGoingToDash ? dash : cal;
+            const outgoing = isGoingToDash ? cal : dash;
 
-            if (viewName === 'dashboard') {
-                dash.classList.remove('hidden-left', 'hidden-right');
-                dash.classList.add('active');
-                cal.classList.remove('active');
-                cal.classList.add('hidden-right');
-                btnDash.className = "flex-1 md:flex-none px-8 py-3 rounded-2xl font-bold text-sm bg-blue-600 text-white transition-all shadow-lg shadow-blue-900/20";
-                btnCal.className = "flex-1 md:flex-none px-8 py-3 rounded-2xl font-bold text-sm bg-[#2e3847] text-gray-300 hover:bg-[#3d4959] transition-all border border-[#4b5563] md:border-transparent";
-                updateStats();
-            } else {
-                cal.classList.remove('hidden-left', 'hidden-right');
-                cal.classList.add('active');
-                dash.classList.remove('active');
-                dash.classList.add('hidden-left');
-                btnCal.className = "flex-1 md:flex-none px-8 py-3 rounded-2xl font-bold text-sm bg-blue-600 text-white transition-all shadow-lg shadow-blue-900/20";
-                btnDash.className = "flex-1 md:flex-none px-8 py-3 rounded-2xl font-bold text-sm bg-[#2e3847] text-gray-300 hover:bg-[#3d4959] transition-all border border-[#4b5563] md:border-transparent";
-            }
+            // Prepare transition
+            incoming.classList.remove('hidden-left', 'hidden-right');
+            incoming.classList.add('sliding', isGoingToDash ? 'hidden-left' : 'hidden-right');
+            incoming.style.display = 'block';
+
+            // Trigger animation frame for transition
+            requestAnimationFrame(() => {
+                outgoing.classList.add('sliding', isGoingToDash ? 'hidden-right' : 'hidden-left');
+                outgoing.classList.remove('active');
+                
+                incoming.classList.remove('hidden-left', 'hidden-right');
+                incoming.classList.add('active');
+
+                // Update UI buttons
+                if (isGoingToDash) {
+                    btnDash.className = "flex-1 md:flex-none px-8 py-3 rounded-2xl font-bold text-sm bg-blue-600 text-white transition-all shadow-lg shadow-blue-900/20 active:scale-95";
+                    btnCal.className = "flex-1 md:flex-none px-8 py-3 rounded-2xl font-bold text-sm bg-[#2e3847] text-gray-300 hover:bg-[#3d4959] transition-all border border-[#4b5563] md:border-transparent active:scale-95";
+                } else {
+                    btnCal.className = "flex-1 md:flex-none px-8 py-3 rounded-2xl font-bold text-sm bg-blue-600 text-white transition-all shadow-lg shadow-blue-900/20 active:scale-95";
+                    btnDash.className = "flex-1 md:flex-none px-8 py-3 rounded-2xl font-bold text-sm bg-[#2e3847] text-gray-300 hover:bg-[#3d4959] transition-all border border-[#4b5563] md:border-transparent active:scale-95";
+                }
+            });
+
+            // Cleanup after animation (400ms is the CSS duration)
+            setTimeout(() => {
+                outgoing.style.display = 'none';
+                outgoing.classList.remove('sliding', 'hidden-left', 'hidden-right');
+                incoming.classList.remove('sliding');
+
+                if (isGoingToDash) {
+                    window.scrollTo({ top: 0, behavior: 'auto' });
+                    updateStats();
+                } else {
+                    const now = new Date();
+                    if (currentYear === now.getFullYear()) {
+                        const card = document.getElementById('current-month-card');
+                        if (card) card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    }
+                }
+            }, 400);
         }
 
         function toggleEditMode() {
             isEditMode = !isEditMode;
-            const iconWrapper = document.getElementById('edit-icon-wrapper');
             const label = document.getElementById('edit-text-label');
             const container = document.getElementById('calendar-container');
-
-            if (!iconWrapper || !label || !container) return;
-
             if (isEditMode) {
-                iconWrapper.classList.replace('text-gray-400', 'text-red-400');
                 label.innerText = "Bearbeiten AN";
                 container.classList.add('edit-mode');
-                showToast("Bearbeitungsmodus aktiviert");
+                showToast("Bearbeitungsmodus AN");
             } else {
-                iconWrapper.classList.replace('text-red-400', 'text-gray-400');
                 label.innerText = "Bearbeiten AUS";
                 container.classList.remove('edit-mode');
             }
-            const dropdown = document.getElementById('actions-dropdown');
-            if (dropdown) dropdown.classList.add('hidden');
+            document.getElementById('actions-dropdown')?.classList.add('hidden');
         }
 
         function setYear(year) {
             currentYear = year;
-            const statYearLabel = document.getElementById('stat-year');
-            if (statYearLabel) statYearLabel.innerText = year;
-            
+            document.getElementById('stat-year').innerText = year;
             [2025, 2026].forEach(y => {
                 const el = document.getElementById('btn-' + y);
-                if (el) {
-                    if (y === year) {
-                        el.className = "px-5 py-2 rounded-xl text-sm font-bold transition-all bg-blue-600 text-white shadow-lg shadow-blue-900/20";
-                    } else {
-                        el.className = "px-5 py-2 rounded-xl text-sm font-semibold transition-all text-gray-400 hover:text-white hover:bg-[#3d4959]";
-                    }
-                }
+                if (el) el.className = (y === year) ? "px-5 py-2 rounded-xl text-sm font-bold transition-all bg-blue-600 text-white shadow-lg shadow-blue-900/20" : "px-5 py-2 rounded-xl text-sm font-semibold transition-all text-gray-400 hover:text-white hover:bg-[#3d4959]";
             });
-
             const hourSection = document.getElementById('hours-chart-section');
-            if (hourSection) {
-                if (year >= 2026) hourSection.classList.remove('hidden');
-                else hourSection.classList.add('hidden');
-            }
-            
+            if (hourSection) hourSection.classList.toggle('hidden', year < 2026);
             initCalendar();
         }
 
@@ -409,54 +430,43 @@
             const grid = document.getElementById('calendar-container');
             if (!grid) return;
             grid.innerHTML = '';
+            const now = new Date();
+            const isActualYear = currentYear === now.getFullYear();
 
             months.forEach((monthName, index) => {
+                const isCurrentMonth = isActualYear && index === now.getMonth();
                 const monthDiv = document.createElement('div');
                 monthDiv.className = "bg-[#2e3847] p-6 rounded-3xl shadow-xl border border-[#4b5563] break-inside-avoid flex flex-col hover:shadow-2xl transition-all duration-300";
+                if (isCurrentMonth) {
+                    monthDiv.id = "current-month-card";
+                    monthDiv.classList.add('current-month-highlight');
+                }
+                monthDiv.innerHTML = `<h2 class="text-base font-bold text-white mb-5 text-center uppercase tracking-wide">${monthName}</h2>`;
                 
-                const title = document.createElement('h2');
-                title.className = "text-base font-bold text-white mb-5 text-center uppercase tracking-wide";
-                title.innerText = monthName;
-                monthDiv.appendChild(title);
-
                 const daysHeader = document.createElement('div');
                 daysHeader.className = "grid grid-cols-7 gap-1 mb-3";
-                daysShort.forEach(day => {
-                    const d = document.createElement('div');
-                    d.className = "text-center text-[11px] font-bold text-gray-500 uppercase";
-                    d.innerText = day;
-                    daysHeader.appendChild(d);
-                });
+                daysShort.forEach(day => daysHeader.innerHTML += `<div class="text-center text-[11px] font-bold text-gray-500 uppercase">${day}</div>`);
                 monthDiv.appendChild(daysHeader);
 
                 const daysGrid = document.createElement('div');
                 daysGrid.className = "grid grid-cols-7 gap-1 flex-1";
-
                 const firstDay = new Date(currentYear, index, 1);
-                let startDay = firstDay.getDay(); 
-                startDay = (startDay === 0) ? 6 : startDay - 1;
+                let startDay = (firstDay.getDay() === 0) ? 6 : firstDay.getDay() - 1;
+                for (let i = 0; i < startDay; i++) daysGrid.innerHTML += '<div></div>';
+
                 const daysInMonth = new Date(currentYear, index + 1, 0).getDate();
-
-                for (let i = 0; i < startDay; i++) daysGrid.appendChild(document.createElement('div'));
-
                 for (let d = 1; d <= daysInMonth; d++) {
                     const dateStr = `${currentYear}-${String(index + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
                     const cell = document.createElement('div');
                     cell.className = "day-cell text-sm font-medium";
                     cell.innerText = d;
-                    
                     if (markedDates[dateStr]) {
                         cell.classList.add('marked');
                         if (currentYear >= 2026 && markedDates[dateStr].hours) {
                             cell.innerHTML = `<span>${d}</span><span class="text-[9px] mt-0.5 opacity-90 text-white">${markedDates[dateStr].hours}h</span>`;
-                            cell.style.lineHeight = "1";
                         }
                     }
-
-                    cell.onclick = (e) => {
-                        e.preventDefault();
-                        if (isEditMode) handleCellClick(dateStr);
-                    };
+                    cell.onclick = (e) => { e.preventDefault(); if (isEditMode) handleCellClick(dateStr); };
                     daysGrid.appendChild(cell);
                 }
                 monthDiv.appendChild(daysGrid);
@@ -466,229 +476,101 @@
         }
 
         function handleCellClick(dateStr) {
-            if (currentYear >= 2026) {
-                openEntryModal(dateStr);
-            } else {
+            if (currentYear >= 2026) openEntryModal(dateStr);
+            else {
                 if (markedDates[dateStr]) delete markedDates[dateStr];
                 else markedDates[dateStr] = { hours: null };
-                saveToStorage();
-                initCalendar(); 
+                saveToStorage(); initCalendar();
             }
         }
 
         function openEntryModal(dateStr) {
             activeDateStr = dateStr;
-            const data = markedDates[dateStr];
-            const dateObj = new Date(dateStr);
-            const dateLabel = dateObj.toLocaleDateString('de-DE', { day: '2-digit', month: 'long', year: 'numeric' });
-            
-            const dateLabelEl = document.getElementById('entry-modal-date');
             const input = document.getElementById('hour-input');
-            const delBtn = document.getElementById('delete-entry-btn');
-            
-            if (dateLabelEl) dateLabelEl.innerText = dateLabel;
+            const data = markedDates[dateStr];
+            document.getElementById('entry-modal-date').innerText = new Date(dateStr).toLocaleDateString('de-DE', { day: '2-digit', month: 'long', year: 'numeric' });
             if (input) input.value = data ? data.hours : '';
-            if (delBtn) {
-                if (data) delBtn.classList.remove('hidden');
-                else delBtn.classList.add('hidden');
-            }
-
-            const modal = document.getElementById('hour-entry-modal');
-            if (modal) {
-                modal.classList.remove('hidden');
-                if (input) setTimeout(() => input.focus(), 100);
-            }
+            document.getElementById('delete-entry-btn')?.classList.toggle('hidden', !data);
+            document.getElementById('hour-entry-modal')?.classList.remove('hidden');
+            setTimeout(() => input?.focus(), 100);
         }
 
-        function closeEntryModal() {
-            const modal = document.getElementById('hour-entry-modal');
-            if (modal) modal.classList.add('hidden');
-            activeDateStr = null;
-        }
+        function closeEntryModal() { document.getElementById('hour-entry-modal')?.classList.add('hidden'); activeDateStr = null; }
 
         function saveHourEntry() {
             if (!activeDateStr) return;
-            const input = document.getElementById('hour-input');
-            let val = input ? input.value : '';
-            if (val === '') {
-                delete markedDates[activeDateStr];
-            } else {
+            const val = document.getElementById('hour-input')?.value;
+            if (val === '') delete markedDates[activeDateStr];
+            else {
                 let h = parseFloat(val.toString().replace(',', '.'));
-                if (isNaN(h) || h < 0.1 || h > 24) {
-                    showToast("Bitte 0.1 - 24 h eingeben.");
-                    return;
-                }
+                if (isNaN(h) || h < 0.1 || h > 24) { showToast("Bitte 0.1 - 24 h eingeben."); return; }
                 markedDates[activeDateStr] = { hours: h };
             }
-            saveToStorage();
-            initCalendar();
-            closeEntryModal();
+            saveToStorage(); initCalendar(); closeEntryModal();
         }
 
-        function deleteHourEntry() {
-            if (activeDateStr) {
-                delete markedDates[activeDateStr];
-                saveToStorage();
-                initCalendar();
-                closeEntryModal();
-            }
-        }
+        function deleteHourEntry() { if (activeDateStr) { delete markedDates[activeDateStr]; saveToStorage(); initCalendar(); closeEntryModal(); } }
 
         function triggerClear() {
-            const confirmText = document.getElementById('confirm-text');
-            if (confirmText) confirmText.innerText = `Alle Markierungen für ${currentYear} löschen?`;
-            
             const modal = document.getElementById('confirm-modal');
-            const btn = document.getElementById('confirm-action-btn');
             if (modal) modal.classList.remove('hidden');
-            
-            if (btn) {
-                btn.onclick = () => {
-                    Object.keys(markedDates).forEach(date => {
-                        if (date.startsWith(String(currentYear))) delete markedDates[date];
-                    });
-                    saveToStorage();
-                    initCalendar();
-                    closeConfirmModal();
-                    showToast("Jahr geleert");
-                };
-            }
-            const dropdown = document.getElementById('actions-dropdown');
-            if (dropdown) dropdown.classList.add('hidden');
+            document.getElementById('confirm-action-btn').onclick = () => {
+                Object.keys(markedDates).forEach(date => { if (date.startsWith(String(currentYear))) delete markedDates[date]; });
+                saveToStorage(); initCalendar(); closeConfirmModal(); showToast("Jahr geleert");
+            };
+            document.getElementById('actions-dropdown')?.classList.add('hidden');
         }
 
-        function closeConfirmModal() {
-            const modal = document.getElementById('confirm-modal');
-            if (modal) modal.classList.add('hidden');
-        }
+        function closeConfirmModal() { document.getElementById('confirm-modal')?.classList.add('hidden'); }
 
         function updateStats() {
-            const currentYearKeys = Object.keys(markedDates).filter(d => d.startsWith(String(currentYear)));
-            const totalCountEl = document.getElementById('total-count');
-            if (totalCountEl) totalCountEl.innerText = currentYearKeys.length;
-            
-            const weekdayCounts = new Array(7).fill(0); 
-            const weekCounts = new Array(54).fill(0); 
-            const monthHours = new Array(12).fill(0);
-            
-            let totalHours = 0;
-            let daysWithHoursCount = 0;
+            const keys = Object.keys(markedDates).filter(d => d.startsWith(String(currentYear)));
+            document.getElementById('total-count').innerText = keys.length;
+            const weekdayCounts = new Array(7).fill(0);
+            const weekCounts = new Array(54).fill(0);
+            const weekHours = new Array(54).fill(0);
+            let totalHours = 0, workdaysCount = 0;
 
-            currentYearKeys.forEach(dateStr => {
-                const dateObj = new Date(dateStr);
+            keys.forEach(dateStr => {
+                const dateObj = new Date(dateStr), weekNum = getISOWeek(dateStr);
                 weekdayCounts[dateObj.getDay()]++;
-                weekCounts[getISOWeek(dateStr)]++;
-                
+                weekCounts[weekNum]++;
                 if (currentYear >= 2026) {
                     const h = markedDates[dateStr].hours || 0;
-                    monthHours[dateObj.getMonth()] += h;
-                    totalHours += h;
-                    if (h > 0) daysWithHoursCount++;
+                    weekHours[weekNum] += h; totalHours += h; if (h > 0) workdaysCount++;
                 }
             });
             
             const hoursStatsDiv = document.getElementById('hours-stats');
-            const avgHoursEl = document.getElementById('avg-hours');
             if (currentYear >= 2026) {
-                if (hoursStatsDiv) hoursStatsDiv.classList.remove('hidden');
-                const avg = daysWithHoursCount > 0 ? (totalHours / daysWithHoursCount) : 0;
-                if (avgHoursEl) avgHoursEl.innerText = 'Ø ' + parseFloat(avg.toFixed(1)) + ' h';
-            } else {
-                if (hoursStatsDiv) hoursStatsDiv.classList.add('hidden');
-            }
-
-            renderCharts(weekdayCounts, weekCounts, monthHours);
+                hoursStatsDiv?.classList.remove('hidden');
+                document.getElementById('avg-hours').innerText = 'Ø ' + (workdaysCount > 0 ? (totalHours / workdaysCount).toFixed(1) : '0') + ' h';
+            } else hoursStatsDiv?.classList.add('hidden');
+            renderCharts(weekdayCounts, weekCounts, weekHours);
         }
 
-        function renderCharts(weekdayCounts, weekCounts, monthHours) {
-            const chartConfig = { 
-                responsive: true, 
-                maintainAspectRatio: false, 
-                plugins: { legend: { display: false } }, 
-                animation: { duration: 400 } 
-            };
-            
-            const textColor = '#9ca3af';
-            const gridColor = 'rgba(255, 255, 255, 0.05)';
-
-            // Helper to safe-get canvas context
-            const getCtx = (id) => {
-                const el = document.getElementById(id);
-                return el ? el.getContext('2d') : null;
-            };
+        function renderCharts(weekdayCounts, weekCounts, weekHours) {
+            const config = { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, animation: { duration: 400 } };
+            const textColor = '#9ca3af', gridColor = 'rgba(255, 255, 255, 0.05)';
+            const getCtx = id => document.getElementById(id)?.getContext('2d');
 
             const ctxWeek = getCtx('weekChart');
             if (ctxWeek) {
                 if (charts.week) charts.week.destroy();
-                charts.week = new Chart(ctxWeek, {
-                    type: 'line',
-                    data: { 
-                        labels: Array.from({length: 53}, (_, i) => i + 1), 
-                        datasets: [{ 
-                            data: weekCounts.slice(1, 54), 
-                            borderColor: '#10b981', 
-                            backgroundColor: 'rgba(16, 185, 129, 0.1)', 
-                            fill: true, 
-                            tension: 0.4, 
-                            pointRadius: 0,
-                            borderWidth: 3
-                        }] 
-                    },
-                    options: { 
-                        ...chartConfig, 
-                        scales: { 
-                            y: { beginAtZero: true, grid: { color: gridColor }, ticks: { color: textColor, precision: 0 } }, 
-                            x: { grid: { display: false }, ticks: { color: textColor, font: { size: 9 }, autoSkip: true, maxTicksLimit: 12 } } 
-                        } 
-                    }
-                });
+                charts.week = new Chart(ctxWeek, { type: 'line', data: { labels: Array.from({length: 53}, (_, i) => i + 1), datasets: [{ data: weekCounts.slice(1, 54), borderColor: '#10b981', backgroundColor: 'rgba(16, 185, 129, 0.1)', fill: true, tension: 0.4, pointRadius: 0, borderWidth: 3 }] }, options: { ...config, scales: { y: { beginAtZero: true, grid: { color: gridColor }, ticks: { color: textColor, precision: 0 } }, x: { grid: { display: false }, ticks: { color: textColor, font: { size: 9 }, autoSkip: true, maxTicksLimit: 12 } } } } });
             }
 
             const ctxWeekday = getCtx('weekdayChart');
             if (ctxWeekday) {
                 if (charts.weekday) charts.weekday.destroy();
-                charts.weekday = new Chart(ctxWeekday, {
-                    type: 'bar',
-                    data: { 
-                        labels: ["Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"], 
-                        datasets: [{ 
-                            data: [weekdayCounts[1], weekdayCounts[2], weekdayCounts[3], weekdayCounts[4], weekdayCounts[5], weekdayCounts[6], weekdayCounts[0]], 
-                            backgroundColor: '#3b82f6', 
-                            borderRadius: 6 
-                        }] 
-                    },
-                    options: { 
-                        ...chartConfig, 
-                        scales: { 
-                            y: { beginAtZero: true, grid: { color: gridColor }, ticks: { color: textColor, precision: 0 } }, 
-                            x: { grid: { display: false }, ticks: { color: textColor, font: { size: 10, weight: 'bold' } } } 
-                        } 
-                    }
-                });
+                charts.weekday = new Chart(ctxWeekday, { type: 'bar', data: { labels: ["Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"], datasets: [{ data: [weekdayCounts[1], weekdayCounts[2], weekdayCounts[3], weekdayCounts[4], weekdayCounts[5], weekdayCounts[6], weekdayCounts[0]], backgroundColor: '#3b82f6', borderRadius: 6 }] }, options: { ...config, scales: { y: { beginAtZero: true, grid: { color: gridColor }, ticks: { color: textColor, precision: 0 } }, x: { grid: { display: false }, ticks: { color: textColor, font: { size: 10, weight: 'bold' } } } } } });
             }
             
             if (currentYear >= 2026) {
                 const ctxHours = getCtx('hoursChart');
                 if (ctxHours) {
                     if (charts.hours) charts.hours.destroy();
-                    charts.hours = new Chart(ctxHours, {
-                        type: 'bar',
-                        data: { 
-                            labels: months.map(m => m.substring(0, 3)), 
-                            datasets: [{ 
-                                data: monthHours, 
-                                backgroundColor: '#f59e0b', 
-                                borderRadius: 8 
-                            }] 
-                        },
-                        options: { 
-                            ...chartConfig, 
-                            scales: { 
-                                y: { beginAtZero: true, grid: { color: gridColor }, ticks: { color: textColor } }, 
-                                x: { grid: { display: false }, ticks: { color: textColor, font: { size: 11, weight: 'bold' } } } 
-                            } 
-                        }
-                    });
+                    charts.hours = new Chart(ctxHours, { type: 'bar', data: { labels: Array.from({length: 53}, (_, i) => i + 1), datasets: [{ data: weekHours.slice(1, 54), backgroundColor: '#f59e0b', borderRadius: 4 }] }, options: { ...config, scales: { y: { beginAtZero: true, grid: { color: gridColor }, ticks: { color: textColor } }, x: { grid: { display: false }, ticks: { color: textColor, font: { size: 8 }, autoSkip: true, maxTicksLimit: 12 } } } } });
                 }
             }
         }
@@ -706,80 +588,46 @@
             showToast("PDF wird erstellt...");
             const element = document.getElementById('calendar-content');
             if (!element) return;
-            const opt = { 
-                margin: [10, 10], 
-                filename: `Kalender_${currentYear}.pdf`, 
-                image: { type: 'jpeg', quality: 0.98 }, 
-                html2canvas: { scale: 2, useCORS: true, backgroundColor: '#1a1f26' }, 
-                jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' } 
-            };
-            html2pdf().set(opt).from(element).save().then(() => {
-                const dropdown = document.getElementById('actions-dropdown');
-                if (dropdown) dropdown.classList.add('hidden');
-            });
+            html2pdf().set({ margin: [10, 10], filename: `Kalender_${currentYear}.pdf`, image: { type: 'jpeg', quality: 0.98 }, html2canvas: { scale: 2, useCORS: true, backgroundColor: '#1a1f26' }, jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' } }).from(element).save().then(() => document.getElementById('actions-dropdown')?.classList.add('hidden'));
         }
 
         function downloadJSON() {
             const sorted = Object.keys(markedDates).sort().reduce((obj, key) => { obj[key] = markedDates[key]; return obj; }, {});
             const blob = new Blob([JSON.stringify(sorted, null, 2)], { type: "application/json" });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `kalender_backup_${new Date().toISOString().split('T')[0]}.json`;
-            a.click();
-            URL.revokeObjectURL(url);
-            const dropdown = document.getElementById('actions-dropdown');
-            if (dropdown) dropdown.classList.add('hidden');
-            showToast("Backup heruntergeladen");
+            const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `kalender_${new Date().toISOString().split('T')[0]}.json`; a.click();
+            document.getElementById('actions-dropdown')?.classList.add('hidden');
+            showToast("Export erfolgreich");
         }
 
         function uploadJSON(input) {
-            const file = input.files[0];
-            if (!file) return;
+            const file = input.files[0]; if (!file) return;
             const reader = new FileReader();
             reader.onload = function(e) {
                 try {
                     const imported = JSON.parse(e.target.result);
-                    if (Array.isArray(imported)) {
-                        markedDates = {};
-                        imported.forEach(d => { markedDates[d] = { hours: null }; });
-                    } else if (typeof imported === 'object') markedDates = imported;
-                    saveToStorage();
-                    initCalendar();
-                    showToast("Daten importiert");
+                    if (Array.isArray(imported)) { markedDates = {}; imported.forEach(d => { markedDates[d] = { hours: null }; }); }
+                    else if (typeof imported === 'object') markedDates = imported;
+                    saveToStorage(); initCalendar(); showToast("Import erfolgreich");
                 } catch (err) { showToast("Fehler beim Import"); }
                 input.value = '';
             };
             reader.readAsText(file);
-            const dropdown = document.getElementById('actions-dropdown');
-            if (dropdown) dropdown.classList.add('hidden');
+            document.getElementById('actions-dropdown')?.classList.add('hidden');
         }
         
         let touchStartX = 0;
-        document.getElementById('main-viewport').addEventListener('touchstart', e => { touchStartX = e.changedTouches[0].screenX; }, {passive: true});
-        document.getElementById('main-viewport').addEventListener('touchend', e => {
-            const touchEndX = e.changedTouches[0].screenX;
-            const diff = touchEndX - touchStartX;
+        document.getElementById('main-viewport')?.addEventListener('touchstart', e => { touchStartX = e.changedTouches[0].screenX; }, {passive: true});
+        document.getElementById('main-viewport')?.addEventListener('touchend', e => {
+            const diff = e.changedTouches[0].screenX - touchStartX;
             if (Math.abs(diff) > 80) {
-                const dashView = document.getElementById('dashboard-view');
-                const calView = document.getElementById('calendar-view');
-                if (diff < 0 && dashView && dashView.classList.contains('active')) switchView('calendar');
-                if (diff > 0 && calView && calView.classList.contains('active')) switchView('dashboard');
+                const dashActive = document.getElementById('dashboard-view')?.classList.contains('active');
+                if (diff < 0 && dashActive) switchView('calendar');
+                if (diff > 0 && !dashActive) switchView('dashboard');
             }
         }, {passive: true});
 
-        // Main Initialization
-        function initApp() {
-            loadFromStorage();
-            setYear(2025);
-            switchView('dashboard');
-        }
-
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', initApp);
-        } else {
-            initApp();
-        }
+        function initApp() { loadFromStorage(); setYear(new Date().getFullYear() === 2026 ? 2026 : 2025); switchView('dashboard'); }
+        if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', initApp); else initApp();
     </script>
 </body>
 </html>
