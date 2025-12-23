@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="de" class="scroll-smooth scroll-pt-[100px]">
+<html lang="de" class="scroll-smooth scroll-pt-[160px]">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
@@ -59,6 +59,14 @@
             color: white !important;
             font-weight: bold;
             box-shadow: 0 4px 12px -1px rgba(239, 68, 68, 0.4);
+        }
+        
+        /* Cursor pointer for marked cells even in non-edit mode (for viewing details) */
+        .day-cell.marked:not(.edit-mode) {
+            cursor: pointer;
+        }
+        .day-cell.marked:not(.edit-mode):hover {
+            opacity: 0.9;
         }
 
         .chart-container {
@@ -149,9 +157,17 @@
         }
         .menu-item:hover { background-color: #3d4959; }
         .menu-item svg { width: 1.25rem; height: 1.25rem; color: #9ca3af; margin-right: 0.75rem; flex-shrink: 0; }
+        
+        /* Disabled input styling for view mode */
+        input:disabled {
+            background-color: #1a1f26;
+            color: #9ca3af;
+            border-color: #374151;
+            cursor: not-allowed;
+        }
     </style>
 </head>
-<body class="min-h-screen p-4 md:p-8 pt-24 md:pt-28 pb-24 md:pb-28">
+<body class="min-h-screen p-4 md:p-8 pt-32 pb-32">
 
     <div id="toast" class="toast-notification">Nachricht</div>
 
@@ -216,7 +232,7 @@
     </div>
 
     <!-- Bottom Controls (Fixed) -->
-    <header class="fixed bottom-0 left-0 w-full bg-[#1a1f26]/95 backdrop-blur-xl border-t border-[#4b5563] z-50 no-print shadow-2xl">
+    <header class="fixed bottom-0 left-0 w-full bg-[#1a1f26]/95 backdrop-blur-xl border-t border-[#4b5563] z-40 no-print shadow-2xl">
         <div class="max-w-7xl mx-auto p-4 flex flex-row justify-between items-center gap-2">
             <!-- Year Selector -->
             <div class="flex bg-[#2e3847] rounded-2xl p-1 shadow-lg border border-[#4b5563]">
@@ -292,8 +308,9 @@
                 <label class="block text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-3 ml-1">Dauer (h)</label>
                 <input type="number" id="hour-input" step="0.5" min="0.5" max="24" class="w-full px-5 py-4 bg-[#1a1f26] border border-[#4b5563] rounded-2xl focus:ring-4 focus:ring-blue-500/20 focus:border-blue-500 outline-none text-2xl font-bold text-white transition-all" placeholder="0.0">
             </div>
-            <div class="flex flex-col gap-3">
-                <button onclick="saveHourEntry()" class="w-full py-4 bg-blue-600 text-white hover:bg-blue-700 rounded-2xl font-bold transition-all shadow-lg active:scale-95">Speichern</button>
+            <!-- Buttons container - hidden in view mode -->
+            <div id="modal-buttons" class="flex flex-col gap-3">
+                <button id="save-btn" onclick="saveHourEntry()" class="w-full py-4 bg-blue-600 text-white hover:bg-blue-700 rounded-2xl font-bold transition-all shadow-lg active:scale-95">Speichern</button>
                 <button id="delete-entry-btn" onclick="deleteHourEntry()" class="w-full py-4 bg-red-900/30 text-red-400 hover:bg-red-900/50 rounded-2xl font-bold transition-all active:scale-95">Eintrag löschen</button>
             </div>
         </div>
@@ -414,7 +431,7 @@
                 btn.classList.add('text-red-500', 'border-red-500');
                 btn.classList.remove('text-gray-200', 'border-[#4b5563]');
                 container.classList.add('edit-mode');
-                showToast("Bearbeitungsmodus AN");
+                // removed showToast here
             } else {
                 btn.classList.remove('text-red-500', 'border-red-500');
                 btn.classList.add('text-gray-200', 'border-[#4b5563]');
@@ -470,11 +487,17 @@
                     cell.innerText = d;
                     if (markedDates[dateStr]) {
                         cell.classList.add('marked');
-                        if (currentYear >= 2026 && markedDates[dateStr].hours) {
-                            cell.innerHTML = `<span>${d}</span><span class="text-[9px] mt-0.5 opacity-90 text-white">${markedDates[dateStr].hours}h</span>`;
-                        }
+                        // removed hours display here
                     }
-                    cell.onclick = (e) => { e.preventDefault(); if (isEditMode) handleCellClick(dateStr); };
+                    cell.onclick = (e) => { 
+                        e.preventDefault(); 
+                        if (isEditMode) {
+                            handleCellClick(dateStr); 
+                        } else if (markedDates[dateStr] && currentYear >= 2026) {
+                            // View Mode: Open read-only modal if marked and in 2026
+                            openViewModal(dateStr);
+                        }
+                    };
                     daysGrid.appendChild(cell);
                 }
                 monthDiv.appendChild(daysGrid);
@@ -492,15 +515,48 @@
             }
         }
 
+        // Open modal in EDIT mode
         function openEntryModal(dateStr) {
             activeDateStr = dateStr;
             const input = document.getElementById('hour-input');
             const data = markedDates[dateStr];
+            
+            document.getElementById('entry-modal-title').innerText = "Stunden erfassen";
             document.getElementById('entry-modal-date').innerText = new Date(dateStr).toLocaleDateString('de-DE', { day: '2-digit', month: 'long', year: 'numeric' });
-            if (input) input.value = data ? data.hours : '';
+            
+            if (input) {
+                input.value = data ? data.hours : '';
+                input.disabled = false; // Enable input
+            }
+            
+            // Show buttons
+            const btnContainer = document.getElementById('modal-buttons');
+            if (btnContainer) btnContainer.classList.remove('hidden');
+            
             document.getElementById('delete-entry-btn')?.classList.toggle('hidden', !data);
             document.getElementById('hour-entry-modal')?.classList.remove('hidden');
             setTimeout(() => input?.focus(), 100);
+        }
+
+        // Open modal in VIEW (Read-Only) mode
+        function openViewModal(dateStr) {
+            const data = markedDates[dateStr];
+            if (!data) return; // Should not happen if called correctly
+
+            document.getElementById('entry-modal-title').innerText = "Details";
+            document.getElementById('entry-modal-date').innerText = new Date(dateStr).toLocaleDateString('de-DE', { day: '2-digit', month: 'long', year: 'numeric' });
+            
+            const input = document.getElementById('hour-input');
+            if (input) {
+                input.value = data.hours || 0;
+                input.disabled = true; // Disable input
+            }
+
+            // Hide buttons
+            const btnContainer = document.getElementById('modal-buttons');
+            if (btnContainer) btnContainer.classList.add('hidden');
+
+            document.getElementById('hour-entry-modal')?.classList.remove('hidden');
         }
 
         function closeEntryModal() { document.getElementById('hour-entry-modal')?.classList.add('hidden'); activeDateStr = null; }
