@@ -28,7 +28,7 @@
         }
         
         @media print {
-            body { -webkit-print-color-adjust: exact; print-color-adjust: exact; background-color: white; color: black; overflow: visible; }
+            body { -webkit-print-color-adjust: exact; print-color-adjust: exact; background-color: white; color: black; overflow: visible; padding: 0 !important; }
             .no-print { display: none !important; }
             .max-w-7xl { max-width: 100% !important; margin: 0 !important; padding: 0 !important; }
             .bg-[#2e3847] { background-color: white !important; border: 1px solid #e5e7eb !important; }
@@ -106,7 +106,7 @@
         ::-webkit-scrollbar-thumb:hover { background: #6b7280; }
 
         #actions-dropdown {
-            transform-origin: top right;
+            transform-origin: bottom right;
             transition: opacity 0.2s ease, transform 0.2s ease;
             background-color: #2e3847;
             border: 1px solid #4b5563;
@@ -151,68 +151,21 @@
         .menu-item svg { width: 1.25rem; height: 1.25rem; color: #9ca3af; margin-right: 0.75rem; flex-shrink: 0; }
     </style>
 </head>
-<body class="min-h-screen p-4 md:p-8 pb-32 md:pb-12">
+<body class="min-h-screen p-4 md:p-8 pt-24 pb-24">
 
     <div id="toast" class="toast-notification">Nachricht</div>
 
-    <!-- Header -->
-    <header class="max-w-7xl mx-auto mb-8 no-print flex flex-row justify-between items-center gap-2">
-        <!-- Year Selector -->
-        <div class="flex bg-[#2e3847] rounded-2xl p-1.5 shadow-lg border border-[#4b5563]">
-            <button onclick="setYear(2025)" id="btn-2025" class="px-5 py-2 rounded-xl text-sm font-bold transition-all">2025</button>
-            <button onclick="setYear(2026)" id="btn-2026" class="px-5 py-2 rounded-xl text-sm font-bold transition-all">2026</button>
-        </div>
-
-        <div class="flex items-center gap-2">
-            <!-- New Standalone Edit Button -->
-            <button id="edit-toggle-btn" onclick="toggleEditMode()" class="inline-flex justify-center items-center rounded-2xl border border-[#4b5563] shadow-lg p-2.5 bg-[#2e3847] text-gray-200 hover:bg-[#3d4959] focus:outline-none transition-all" aria-label="Bearbeiten">
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/>
-                    <path d="m15 5 4 4"/>
-                </svg>
-            </button>
-
-            <!-- Settings Menu -->
-            <div class="relative inline-block text-left" id="menu-container">
-                <button onclick="toggleDropdown(event)" class="inline-flex justify-center items-center rounded-2xl border border-[#4b5563] shadow-lg p-2.5 bg-[#2e3847] text-gray-200 hover:bg-[#3d4959] focus:outline-none transition-all" aria-label="Einstellungen">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                    </svg>
-                </button>
-
-                <div id="actions-dropdown" class="hidden absolute right-0 z-[60] mt-2 w-60 rounded-2xl shadow-2xl focus:outline-none overflow-hidden">
-                    <div class="py-0 flex flex-col">
-                        <button onclick="downloadPDF()" class="menu-item">
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
-                            </svg>
-                            <span>PDF Export</span>
-                        </button>
-                        <button onclick="downloadJSON()" class="menu-item">
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                            </svg>
-                            <span>JSON Export</span>
-                        </button>
-                        <label class="menu-item cursor-pointer">
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0l-4 4m4-4v12" />
-                            </svg>
-                            <span class="flex-1">JSON Import</span>
-                            <input type="file" accept=".json" class="hidden" onchange="uploadJSON(this)">
-                        </label>
-                        <button onclick="triggerClear()" class="menu-item !border-b-0 hover:bg-red-900/30 text-red-400 group">
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="group-hover:text-red-400">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                            </svg>
-                            <span>Jahr leeren</span>
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </header>
+    <!-- Navigation (NOW AT TOP) -->
+    <nav class="fixed top-0 left-0 w-full bg-[#1a1f26]/95 backdrop-blur-xl border-b border-[#4b5563] z-40 no-print shadow-xl">
+         <div class="flex justify-center gap-4 p-4 max-w-7xl mx-auto">
+             <button id="nav-dashboard" onclick="switchView('dashboard')" class="flex-1 md:flex-none px-8 py-3 rounded-2xl font-bold text-sm bg-blue-600 text-white transition-all shadow-lg shadow-blue-900/20 active:scale-95">
+                Dashboard
+             </button>
+             <button id="nav-calendar" onclick="switchView('calendar')" class="flex-1 md:flex-none px-8 py-3 rounded-2xl font-bold text-sm bg-[#2e3847] text-gray-300 hover:bg-[#3d4959] transition-all border border-[#4b5563] md:border-transparent active:scale-95">
+                Kalender
+             </button>
+         </div>
+    </nav>
 
     <div id="main-viewport" class="max-w-7xl mx-auto relative">
 
@@ -261,19 +214,69 @@
         </div>
     </div>
 
-    <!-- Navigation -->
-    <nav class="fixed bottom-0 left-0 w-full bg-[#1a1f26]/95 backdrop-blur-xl border-t border-[#4b5563] z-40 md:relative md:border-none md:bg-transparent md:w-auto mt-12 no-print shadow-2xl md:shadow-none">
-         <div class="flex justify-center gap-4 p-4 md:p-0 max-w-7xl mx-auto">
-             <button id="nav-dashboard" onclick="switchView('dashboard')" class="flex-1 md:flex-none px-8 py-3 rounded-2xl font-bold text-sm bg-blue-600 text-white transition-all shadow-lg shadow-blue-900/20 active:scale-95">
-                Dashboard
-             </button>
-             <button id="nav-calendar" onclick="switchView('calendar')" class="flex-1 md:flex-none px-8 py-3 rounded-2xl font-bold text-sm bg-[#2e3847] text-gray-300 hover:bg-[#3d4959] transition-all border border-[#4b5563] md:border-transparent active:scale-95">
-                Kalender
-             </button>
-         </div>
-    </nav>
+    <!-- Header (NOW AT BOTTOM) -->
+    <header class="fixed bottom-0 left-0 w-full bg-[#1a1f26]/95 backdrop-blur-xl border-t border-[#4b5563] z-40 no-print shadow-2xl">
+        <div class="max-w-7xl mx-auto p-4 flex flex-row justify-between items-center gap-2">
+            <!-- Year Selector -->
+            <div class="flex bg-[#2e3847] rounded-2xl p-1 shadow-lg border border-[#4b5563]">
+                <button onclick="setYear(2025)" id="btn-2025" class="px-5 py-2 rounded-xl text-sm font-bold transition-all">2025</button>
+                <button onclick="setYear(2026)" id="btn-2026" class="px-5 py-2 rounded-xl text-sm font-bold transition-all">2026</button>
+            </div>
 
-    <!-- Modals -->
+            <div class="flex items-center gap-2">
+                <!-- Standalone Edit Button -->
+                <button id="edit-toggle-btn" onclick="toggleEditMode()" class="inline-flex justify-center items-center rounded-2xl border border-[#4b5563] shadow-lg p-2.5 bg-[#2e3847] text-gray-200 hover:bg-[#3d4959] focus:outline-none transition-all" aria-label="Bearbeiten">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/>
+                        <path d="m15 5 4 4"/>
+                    </svg>
+                </button>
+
+                <!-- Settings Menu Container -->
+                <div class="relative inline-block text-left" id="menu-container">
+                    <button onclick="toggleDropdown(event)" class="inline-flex justify-center items-center rounded-2xl border border-[#4b5563] shadow-lg p-2.5 bg-[#2e3847] text-gray-200 hover:bg-[#3d4959] focus:outline-none transition-all" aria-label="Einstellungen">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                        </svg>
+                    </button>
+
+                    <!-- Menu opens UPWARD now -->
+                    <div id="actions-dropdown" class="hidden absolute right-0 bottom-full z-[60] mb-2 w-60 rounded-2xl shadow-2xl focus:outline-none overflow-hidden">
+                        <div class="py-0 flex flex-col">
+                            <button onclick="downloadPDF()" class="menu-item">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                                </svg>
+                                <span>PDF Export</span>
+                            </button>
+                            <button onclick="downloadJSON()" class="menu-item">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                                </svg>
+                                <span>JSON Export</span>
+                            </button>
+                            <label class="menu-item cursor-pointer">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0l-4 4m4-4v12" />
+                                </svg>
+                                <span class="flex-1">JSON Import</span>
+                                <input type="file" accept=".json" class="hidden" onchange="uploadJSON(this)">
+                            </label>
+                            <button onclick="triggerClear()" class="menu-item !border-b-0 hover:bg-red-900/30 text-red-400 group">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="group-hover:text-red-400">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                </svg>
+                                <span>Jahr leeren</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Modals (Hour Entry / Confirm) -->
     <div id="hour-entry-modal" class="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center hidden z-[100] p-4 no-print">
         <div class="bg-[#2e3847] rounded-3xl shadow-2xl p-8 max-w-sm w-full transform transition-all border border-[#4b5563]">
             <div class="flex justify-between items-start mb-6">
