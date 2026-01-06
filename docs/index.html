@@ -610,8 +610,20 @@
         function updateStats() {
             const keys = Object.keys(markedDates).filter(d => d.startsWith(String(currentYear)));
             
+            let weeksPassed = 52;
+            const now = new Date();
+            
+            if (currentYear === now.getFullYear()) {
+                const y = now.getFullYear();
+                const m = String(now.getMonth() + 1).padStart(2, '0');
+                const d = String(now.getDate()).padStart(2, '0');
+                weeksPassed = Math.max(1, getISOWeek(`${y}-${m}-${d}`));
+            } else if (currentYear > now.getFullYear()) {
+                weeksPassed = 1;
+            }
+
             // Calculate Average Days per Week
-            const avgDaysPerWeek = (keys.length / 52).toFixed(1);
+            const avgDaysPerWeek = (keys.length / weeksPassed).toFixed(1);
             const avgDaysEl = document.getElementById('avg-days-week');
             if(avgDaysEl) avgDaysEl.innerText = avgDaysPerWeek;
 
@@ -719,5 +731,4 @@
         if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', initApp); else initApp();
     </script>
 </body>
-
 </html>
