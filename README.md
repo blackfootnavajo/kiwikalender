@@ -1,63 +1,75 @@
 Kalender & Dashboard 2025/2026
 
-Übersicht
+Eine moderne, webbasierte Anwendung zur Verwaltung von Terminen und Arbeitsstunden für die Jahre 2025 und 2026. Diese App läuft vollständig im Browser und speichert alle Daten lokal auf deinem Gerät.
 
-Diese Web-Anwendung ist ein interaktives Werkzeug zur Verwaltung von Terminen und Arbeitsstunden für die Jahre 2025 und 2026. Sie kombiniert eine übersichtliche Kalenderdarstellung mit einem leistungsstarken Dashboard zur statistischen Auswertung.
+🌟 Funktionen
 
-Hauptfunktionen
+📅 Kalender
 
-1. Duales Ansichtssystem
+Jahresübersicht: Wechseln Sie nahtlos zwischen den Jahren 2025 und 2026.
 
-Dashboard: Bietet eine visuelle Auswertung Ihrer Daten mit Diagrammen (Chart.js). Es zeigt wöchentliche Termine, die Verteilung nach Wochentagen und (für 2026) eine detaillierte Stundenübersicht pro Woche.
+Interaktive Tage: Markieren Sie Tage durch einfaches Anklicken (im Bearbeitungsmodus).
 
-Kalender: Eine klassische 12-Monats-Übersicht. Beim Wechsel in die Kalenderansicht springt die App automatisch zum aktuellen Monat des gewählten Jahres.
+Stundenerfassung (2026): Für das Jahr 2026 können spezifische Stunden pro Tag erfasst werden.
 
-2. Daten-Tracking & Speicherung
+Heute-Hervorhebung: Der aktuelle Tag wird im Kalender mit einer blauen Umrandung hervorgehoben.
 
-Termine (2025/2026): Einfaches Markieren von Tagen.
+Detailansicht: Klicken Sie auf markierte Tage (außerhalb des Bearbeitungsmodus), um Details einzusehen (Read-Only).
 
-Stunden-Erfassung (nur 2026): Ein modales Fenster ermöglicht die Eingabe von Arbeitsstunden pro Tag.
+📊 Dashboard
 
-Persistenz: Alle Daten werden automatisch via localStorage im Browser gespeichert. Beim Schließen und Wiederöffnen der App bleiben Ihre Einträge erhalten.
+Statistiken: Visualisierung Ihrer Daten durch interaktive Diagramme (Chart.js).
 
-3. Design & Bedienung
+Wöchentliche Termine: Linien-Diagramm zur Übersicht der Auslastung über die Kalenderwochen.
 
-Dark Theme: Ein modernes, augenschonendes Design basierend auf der Farbe #2e3847.
+Wochentagsverteilung: Balkendiagramm zur Analyse der Verteilung auf Wochentage (Mo-So).
 
-Responsive Layout: Optimiert für Desktop und mobile Endgeräte (inklusive Swipe-Gesten zur Navigation zwischen Dashboard und Kalender).
+KPIs: Anzeige der durchschnittlichen Tage pro Woche und (für 2026) der durchschnittlichen Stunden pro Arbeitstag.
 
-Interaktive Statistiken: Dynamische Berechnung des Stundendurchschnitts basierend auf den tatsächlich geleisteten Arbeitstagen.
+Stundenübersicht: Balkendiagramm der geleisteten Stunden pro Kalenderwoche.
 
-4. Datenmanagement
+🛠️ Tools & Verwaltung
 
-PDF-Export: Generiert eine druckoptimierte Übersicht des Kalenders.
+Daten-Persistenz: Alle Eingaben werden automatisch im localStorage des Browsers gespeichert.
 
-JSON-Export/Import: Ermöglicht manuelle Backups oder den Transfer der Daten auf andere Geräte.
+PDF Export: Erstellen Sie mit einem Klick eine PDF-Datei Ihrer aktuellen Ansicht.
 
-Jahr leeren: Funktion zum schnellen Löschen aller Markierungen eines spezifischen Jahres.
+Backup System: Exportieren Sie Ihre Daten als JSON-Datei und importieren Sie diese auf anderen Geräten.
 
-Technische Details
+Responsive Design: Optimiert für Desktop und Mobile (inkl. Swipe-Gesten zum Wechseln der Ansichten auf Touchscreens).
 
-Frontend: HTML5, Tailwind CSS, JavaScript (ES6+).
+Dark Mode: Augenschonendes, dunkles Farbschema.
 
-Bibliotheken:
+🚀 Nutzung
 
-Chart.js für die Statistiken.
+Starten: Öffnen Sie einfach die index.html Datei in einem modernen Webbrowser.
 
-html2pdf.js für den PDF-Export.
+Navigation: * Nutzen Sie die Buttons oben (Dashboard/Kalender) zum Wechseln der Ansicht.
 
-Lucide / SVG-Icons für die Benutzeroberfläche.
+Auf Mobilgeräten können Sie auch nach links oder rechts wischen.
 
-Berechnungslogik: Verwendet die ISO-Wochenzählung zur korrekten Gruppierung von Daten in KW (Kalenderwochen).
+Bearbeiten:
 
-Bedienungsanleitung
+Aktivieren Sie den Bearbeitungsmodus über das Stift-Symbol unten rechts.
 
-Jahr wählen: Nutzen Sie die Buttons oben links, um zwischen 2025 und 2026 zu wechseln.
+Klicken Sie auf Tage im Kalender, um sie zu markieren oder Stunden (in 2026) einzutragen.
 
-Bearbeiten: Aktivieren Sie den "Bearbeiten"-Modus über das Zahnrad-Menü, um Tage zu markieren oder Stunden (2026) einzutragen.
+Daten sichern:
 
-Navigation: Klicken Sie auf die unteren Navigations-Buttons oder wischen Sie (auf mobilen Geräten) nach links/rechts, um die Ansicht zu wechseln.
+Nutzen Sie das Menü unten rechts (Zahnrad), um ein Backup (JSON) zu erstellen oder als PDF zu drucken.
 
-Sicherung: Nutzen Sie regelmäßig den JSON-Export, um Ihre Daten extern zu sichern.
+💻 Technologien
 
-Hinweis: Diese Anwendung läuft vollständig clientseitig im Browser. Es werden keine Daten an einen externen Server übertragen.
+HTML5 / JavaScript
+
+Tailwind CSS (Styling via CDN)
+
+Chart.js (Diagramme)
+
+html2pdf.js (PDF Generierung)
+
+Inter Font (Google Fonts)
+
+⚠️ Hinweis
+
+Da die Daten im localStorage Ihres Browsers gespeichert werden, gehen diese verloren, wenn Sie den Browser-Cache leeren. Nutzen Sie regelmäßig die JSON Export Funktion, um Ihre Daten dauerhaft zu sichern.
