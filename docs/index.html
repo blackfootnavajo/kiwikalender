@@ -633,7 +633,12 @@
             let totalHours = 0, workdaysCount = 0;
 
             keys.forEach(dateStr => {
-                const dateObj = new Date(dateStr), weekNum = getISOWeek(dateStr);
+                const dateObj = new Date(dateStr);
+                let weekNum = getISOWeek(dateStr);
+                
+                // Fix for end-of-year ISO week issue (e.g. Dec 30 is Week 1)
+                if (dateObj.getMonth() === 11 && weekNum === 1) weekNum = 53;
+
                 weekdayCounts[dateObj.getDay()]++;
                 weekCounts[weekNum]++;
                 if (currentYear >= 2026) {
