@@ -225,13 +225,6 @@
                     </div>
                 </div>
             </div>
-            
-            <div id="hours-chart-section" class="bg-[#2e3847] p-8 rounded-2xl shadow-xl border border-[#4b5563] mb-4 hidden">
-                <h3 class="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-6">Stundenübersicht pro Woche</h3>
-                <div class="chart-container" style="height: 300px;">
-                    <canvas id="hoursChart"></canvas>
-                </div>
-            </div>
         </div>
 
         <!-- CALENDAR VIEW -->
@@ -459,8 +452,7 @@
                 const el = document.getElementById('btn-' + y);
                 if (el) el.className = (y === year) ? "px-5 py-2 rounded-xl text-sm font-bold transition-all bg-blue-600 text-white shadow-lg shadow-blue-900/20" : "px-5 py-2 rounded-xl text-sm font-semibold transition-all text-gray-400 hover:text-white hover:bg-[#3d4959]";
             });
-            const hourSection = document.getElementById('hours-chart-section');
-            if (hourSection) hourSection.classList.toggle('hidden', year < 2026);
+            // Removed hourSection logic as we removed the chart
             initCalendar();
         }
 
@@ -629,7 +621,6 @@
 
             const weekdayCounts = new Array(7).fill(0);
             const weekCounts = new Array(54).fill(0);
-            const weekHours = new Array(54).fill(0);
             let totalHours = 0, workdaysCount = 0;
 
             keys.forEach(dateStr => {
@@ -643,7 +634,7 @@
                 weekCounts[weekNum]++;
                 if (currentYear >= 2026) {
                     const h = markedDates[dateStr].hours || 0;
-                    weekHours[weekNum] += h; totalHours += h; if (h > 0) workdaysCount++;
+                    totalHours += h; if (h > 0) workdaysCount++;
                 }
             });
             
@@ -652,10 +643,10 @@
                 hoursStatsDiv?.classList.remove('hidden');
                 document.getElementById('avg-hours').innerText = 'Ø ' + (workdaysCount > 0 ? (totalHours / workdaysCount).toFixed(1) : '0') + ' h';
             } else hoursStatsDiv?.classList.add('hidden');
-            renderCharts(weekdayCounts, weekCounts, weekHours);
+            renderCharts(weekdayCounts, weekCounts);
         }
 
-        function renderCharts(weekdayCounts, weekCounts, weekHours) {
+        function renderCharts(weekdayCounts, weekCounts) {
             const config = { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, animation: { duration: 400 } };
             const textColor = '#9ca3af', gridColor = 'rgba(255, 255, 255, 0.05)';
             const getCtx = id => document.getElementById(id)?.getContext('2d');
@@ -670,14 +661,6 @@
             if (ctxWeekday) {
                 if (charts.weekday) charts.weekday.destroy();
                 charts.weekday = new Chart(ctxWeekday, { type: 'bar', data: { labels: ["Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"], datasets: [{ data: [weekdayCounts[1], weekdayCounts[2], weekdayCounts[3], weekdayCounts[4], weekdayCounts[5], weekdayCounts[6], weekdayCounts[0]], backgroundColor: '#3b82f6', borderRadius: 6 }] }, options: { ...config, scales: { y: { beginAtZero: true, grid: { color: gridColor }, ticks: { color: textColor, precision: 0 } }, x: { grid: { display: false }, ticks: { color: textColor, font: { size: 10, weight: 'bold' } } } } } });
-            }
-            
-            if (currentYear >= 2026) {
-                const ctxHours = getCtx('hoursChart');
-                if (ctxHours) {
-                    if (charts.hours) charts.hours.destroy();
-                    charts.hours = new Chart(ctxHours, { type: 'bar', data: { labels: Array.from({length: 53}, (_, i) => i + 1), datasets: [{ data: weekHours.slice(1, 54), backgroundColor: '#f59e0b', borderRadius: 4 }] }, options: { ...config, scales: { y: { beginAtZero: true, grid: { color: gridColor }, ticks: { color: textColor } }, x: { grid: { display: false }, ticks: { color: textColor, font: { size: 8 }, autoSkip: true, maxTicksLimit: 12 } } } } });
-                }
             }
         }
 
