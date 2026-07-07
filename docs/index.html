@@ -254,11 +254,21 @@
     <!-- Bottom Controls (Fixed) -->
     <header class="fixed bottom-0 left-0 w-full bg-[#1a1f26]/95 backdrop-blur-xl border-t border-[#4b5563] z-40 no-print shadow-2xl">
         <div class="max-w-7xl mx-auto p-4 flex flex-row justify-between items-center gap-2">
-            <!-- Year Selector -->
-            <div class="flex bg-[#2e3847] rounded-2xl p-1 shadow-lg border border-[#4b5563]">
-                <button onclick="setYear(2025)" id="btn-2025" class="px-5 py-2 rounded-xl text-sm font-bold transition-all">2025</button>
-                <button onclick="setYear(2026)" id="btn-2026" class="px-5 py-2 rounded-xl text-sm font-bold transition-all">2026</button>
-                <button onclick="setYear(2027)" id="btn-2027" class="px-5 py-2 rounded-xl text-sm font-bold transition-all">2027</button>
+            <!-- Year Selector Dropup -->
+            <div class="relative inline-block text-left" id="year-menu-container">
+                <button onclick="toggleYearDropdown(event)" id="year-selector-btn" class="inline-flex justify-center items-center rounded-2xl border border-[#4b5563] shadow-lg px-5 py-2.5 bg-[#2e3847] text-gray-200 font-bold hover:bg-[#3d4959] focus:outline-none transition-all">
+                    <span id="current-year-display">2025</span>
+                    <svg class="-mr-1 ml-2 h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clip-rule="evenodd" />
+                    </svg>
+                </button>
+                <div id="year-dropdown" class="hidden absolute left-0 bottom-full z-[60] mb-2 w-32 rounded-2xl shadow-2xl focus:outline-none overflow-hidden bg-[#2e3847] border border-[#4b5563]">
+                    <div class="py-0 flex flex-col">
+                        <button onclick="setYear(2025)" class="menu-item !justify-center">2025</button>
+                        <button onclick="setYear(2026)" class="menu-item !justify-center">2026</button>
+                        <button onclick="setYear(2027)" class="menu-item !border-b-0 !justify-center">2027</button>
+                    </div>
+                </div>
             </div>
 
             <div class="flex items-center gap-2">
@@ -408,13 +418,24 @@
 
         function toggleDropdown(event) {
             event.stopPropagation();
+            document.getElementById('year-dropdown')?.classList.add('hidden');
             document.getElementById('actions-dropdown')?.classList.toggle('hidden');
         }
 
+        function toggleYearDropdown(event) {
+            event.stopPropagation();
+            document.getElementById('actions-dropdown')?.classList.add('hidden');
+            document.getElementById('year-dropdown')?.classList.toggle('hidden');
+        }
+
         window.addEventListener('click', (e) => {
-            const dropdown = document.getElementById('actions-dropdown');
+            const actionsDropdown = document.getElementById('actions-dropdown');
             const menuContainer = document.getElementById('menu-container');
-            if (dropdown && !menuContainer.contains(e.target)) dropdown.classList.add('hidden');
+            if (actionsDropdown && !menuContainer.contains(e.target)) actionsDropdown.classList.add('hidden');
+
+            const yearDropdown = document.getElementById('year-dropdown');
+            const yearMenuContainer = document.getElementById('year-menu-container');
+            if (yearDropdown && !yearMenuContainer.contains(e.target)) yearDropdown.classList.add('hidden');
         });
 
         function switchView(viewName) {
@@ -489,10 +510,8 @@
         function setYear(year) {
             currentYear = year;
             document.getElementById('stat-year').innerText = year;
-            [2025, 2026, 2027].forEach(y => {
-                const el = document.getElementById('btn-' + y);
-                if (el) el.className = (y === year) ? "px-5 py-2 rounded-xl text-sm font-bold transition-all bg-blue-600 text-white shadow-lg shadow-blue-900/20" : "px-5 py-2 rounded-xl text-sm font-semibold transition-all text-gray-400 hover:text-white hover:bg-[#3d4959]";
-            });
+            document.getElementById('current-year-display').innerText = year;
+            document.getElementById('year-dropdown')?.classList.add('hidden');
             // Removed hourSection logic as we removed the chart
             initCalendar();
         }
