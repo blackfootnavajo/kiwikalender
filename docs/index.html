@@ -10,23 +10,23 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
-        
+
         :root {
             --bg-dark: #1a1f26;
             --card-dark: #2e3847;
             --border-dark: #4b5563;
         }
 
-        body { 
-            font-family: 'Inter', sans-serif; 
-            -webkit-tap-highlight-color: transparent; 
+        body {
+            font-family: 'Inter', sans-serif;
+            -webkit-tap-highlight-color: transparent;
             background-color: var(--bg-dark);
             color: #f3f4f6;
             overflow-x: hidden;
             width: 100%;
             position: relative;
         }
-        
+
         @media print {
             body { -webkit-print-color-adjust: exact; print-color-adjust: exact; background-color: white; color: black; overflow: visible; padding: 0 !important; }
             .no-print { display: none !important; }
@@ -54,19 +54,31 @@
         .edit-mode .day-cell:hover { background-color: #3d4959; border-color: #4b5563; color: white; }
         .edit-mode .day-cell:active { transform: scale(0.92); background-color: #4b5563; }
 
-        .day-cell.marked {
+        .day-cell.marked, .day-cell.marked-red {
             background-color: #ef4444 !important;
             color: white !important;
             font-weight: bold;
             box-shadow: 0 4px 12px -1px rgba(239, 68, 68, 0.4);
             border-color: transparent; /* Reset border for marked items unless it's today */
         }
-        
+
+        .day-cell.marked-purple {
+            background-color: #a855f7 !important;
+            color: white !important;
+            font-weight: bold;
+            box-shadow: 0 4px 12px -1px rgba(168, 85, 247, 0.4);
+            border-color: transparent;
+        }
+
         /* Cursor pointer for marked cells even in non-edit mode (for viewing details) */
-        .day-cell.marked:not(.edit-mode) {
+        .day-cell.marked:not(.edit-mode),
+        .day-cell.marked-red:not(.edit-mode),
+        .day-cell.marked-purple:not(.edit-mode) {
             cursor: pointer;
         }
-        .day-cell.marked:not(.edit-mode):hover {
+        .day-cell.marked:not(.edit-mode):hover,
+        .day-cell.marked-red:not(.edit-mode):hover,
+        .day-cell.marked-purple:not(.edit-mode):hover {
             opacity: 0.9;
         }
 
@@ -77,7 +89,9 @@
             color: #ffffff;
         }
         /* Ensure border is visible even if marked */
-        .day-cell.marked.current-day-highlight {
+        .day-cell.marked.current-day-highlight,
+        .day-cell.marked-red.current-day-highlight,
+        .day-cell.marked-purple.current-day-highlight {
             border-color: #ffffff !important; /* White border if red background */
             box-shadow: 0 0 0 2px #3b82f6, 0 4px 12px -1px rgba(239, 68, 68, 0.4); /* Double ring effect */
         }
@@ -87,10 +101,10 @@
             height: 150px;
             width: 100%;
         }
-        
+
         #main-viewport {
             width: 100%;
-            overflow: hidden; 
+            overflow: hidden;
         }
 
         .view-section {
@@ -99,14 +113,14 @@
             opacity: 0;
             pointer-events: none;
             visibility: hidden;
-            display: none; 
+            display: none;
         }
-        
+
         .view-section.active {
             display: block;
             opacity: 1;
             pointer-events: auto;
-            position: relative; 
+            position: relative;
             transform: translateX(0) !important;
             visibility: visible;
         }
@@ -132,7 +146,7 @@
             background-color: #2e3847;
             border: 1px solid #4b5563;
         }
-        
+
         .toast-notification {
             position: fixed;
             bottom: 100px;
@@ -151,7 +165,7 @@
             transition: all 0.3s ease;
         }
         .toast-notification.show { opacity: 1; bottom: 120px; }
-        
+
         .current-month-highlight {
             border-color: #3b82f6 !important;
             box-shadow: 0 0 20px rgba(59, 130, 246, 0.2);
@@ -170,7 +184,7 @@
         }
         .menu-item:hover { background-color: #3d4959; }
         .menu-item svg { width: 1.25rem; height: 1.25rem; color: #9ca3af; margin-right: 0.75rem; flex-shrink: 0; }
-        
+
         /* Disabled input styling for view mode */
         input:disabled {
             background-color: #1a1f26;
@@ -218,7 +232,7 @@
                     <h3 class="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-2">Ø Tage / Woche</h3>
                     <div class="text-5xl font-extrabold text-blue-400 mb-1" id="avg-days-week">0.0</div>
                     <div class="text-xs text-gray-400 uppercase font-medium">Im Jahr <span id="stat-year">2025</span></div>
-                    
+
                     <div id="hours-stats" class="mt-6 pt-6 border-t border-[#4b5563] w-full hidden">
                         <div class="text-3xl font-extrabold text-orange-400" id="avg-hours">Ø 0</div>
                         <div class="text-[10px] text-gray-400 uppercase font-bold mt-1">Stunden pro Arbeitstag</div>
@@ -244,6 +258,7 @@
             <div class="flex bg-[#2e3847] rounded-2xl p-1 shadow-lg border border-[#4b5563]">
                 <button onclick="setYear(2025)" id="btn-2025" class="px-5 py-2 rounded-xl text-sm font-bold transition-all">2025</button>
                 <button onclick="setYear(2026)" id="btn-2026" class="px-5 py-2 rounded-xl text-sm font-bold transition-all">2026</button>
+                <button onclick="setYear(2027)" id="btn-2027" class="px-5 py-2 rounded-xl text-sm font-bold transition-all">2027</button>
             </div>
 
             <div class="flex items-center gap-2">
@@ -310,6 +325,13 @@
                     <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"></path></svg>
                 </button>
             </div>
+            <div class="mb-6">
+                <label class="block text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-3 ml-1">Farbe</label>
+                <div class="flex gap-4 ml-1">
+                    <button onclick="selectColor('red')" id="color-red" class="w-10 h-10 rounded-full bg-[#ef4444] border-2 border-transparent transition-all hover:scale-110 active:scale-95"></button>
+                    <button onclick="selectColor('purple')" id="color-purple" class="w-10 h-10 rounded-full bg-[#a855f7] border-2 border-white ring-2 ring-[#a855f7] transition-all hover:scale-110 active:scale-95"></button>
+                </div>
+            </div>
             <div class="mb-8">
                 <label class="block text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-3 ml-1">Dauer (h)</label>
                 <input type="number" id="hour-input" step="0.5" min="0.5" max="24" class="w-full px-5 py-4 bg-[#1a1f26] border border-[#4b5563] rounded-2xl focus:ring-4 focus:ring-blue-500/20 focus:border-blue-500 outline-none text-2xl font-bold text-white transition-all" placeholder="0.0">
@@ -339,12 +361,31 @@
     <script>
         const months = ["Januar", "Februar", "März", "April", "Mai", "Juni", "Juli", "August", "September", "Oktober", "November", "Dezember"];
         const daysShort = ["Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"];
-        
+
         let currentYear = 2025;
         let isEditMode = false;
         let markedDates = {};
         let charts = { weekday: null, week: null, hours: null };
         let activeDateStr = null;
+        let selectedColor = 'purple';
+
+        function selectColor(color) {
+            selectedColor = color;
+            const redBtn = document.getElementById('color-red');
+            const purpleBtn = document.getElementById('color-purple');
+
+            if (color === 'red') {
+                redBtn.classList.add('border-white', 'ring-2', 'ring-[#ef4444]');
+                redBtn.classList.remove('border-transparent');
+                purpleBtn.classList.add('border-transparent');
+                purpleBtn.classList.remove('border-white', 'ring-2', 'ring-[#a855f7]');
+            } else {
+                purpleBtn.classList.add('border-white', 'ring-2', 'ring-[#a855f7]');
+                purpleBtn.classList.remove('border-transparent');
+                redBtn.classList.add('border-transparent');
+                redBtn.classList.remove('border-white', 'ring-2', 'ring-[#ef4444]');
+            }
+        }
 
         function saveToStorage() {
             try { localStorage.setItem('calendar_app_data', JSON.stringify(markedDates)); } catch (e) {}
@@ -383,7 +424,7 @@
             const btnCal = document.getElementById('nav-calendar');
 
             if (!dash || !cal || !btnDash || !btnCal) return;
-            
+
             const isGoingToDash = viewName === 'dashboard';
             const incoming = isGoingToDash ? dash : cal;
             const outgoing = isGoingToDash ? cal : dash;
@@ -395,7 +436,7 @@
             requestAnimationFrame(() => {
                 outgoing.classList.add('sliding', isGoingToDash ? 'hidden-right' : 'hidden-left');
                 outgoing.classList.remove('active');
-                
+
                 incoming.classList.remove('hidden-left', 'hidden-right');
                 incoming.classList.add('active');
 
@@ -432,7 +473,7 @@
             isEditMode = !isEditMode;
             const btn = document.getElementById('edit-toggle-btn');
             const container = document.getElementById('calendar-container');
-            
+
             if (isEditMode) {
                 btn.classList.add('text-red-500', 'border-red-500');
                 btn.classList.remove('text-gray-200', 'border-[#4b5563]');
@@ -448,7 +489,7 @@
         function setYear(year) {
             currentYear = year;
             document.getElementById('stat-year').innerText = year;
-            [2025, 2026].forEach(y => {
+            [2025, 2026, 2027].forEach(y => {
                 const el = document.getElementById('btn-' + y);
                 if (el) el.className = (y === year) ? "px-5 py-2 rounded-xl text-sm font-bold transition-all bg-blue-600 text-white shadow-lg shadow-blue-900/20" : "px-5 py-2 rounded-xl text-sm font-semibold transition-all text-gray-400 hover:text-white hover:bg-[#3d4959]";
             });
@@ -472,7 +513,7 @@
                     monthDiv.classList.add('current-month-highlight');
                 }
                 monthDiv.innerHTML = `<h2 class="text-base font-bold text-white mb-5 text-center uppercase tracking-wide">${monthName}</h2>`;
-                
+
                 const daysHeader = document.createElement('div');
                 daysHeader.className = "grid grid-cols-7 gap-1 mb-3";
                 daysShort.forEach(day => daysHeader.innerHTML += `<div class="text-center text-[11px] font-bold text-gray-500 uppercase">${day}</div>`);
@@ -490,7 +531,7 @@
                     const cell = document.createElement('div');
                     cell.className = "day-cell text-sm font-medium";
                     cell.innerText = d;
-                    
+
                     // Highlight current day if it's today
                     const isToday = isActualYear && index === now.getMonth() && d === now.getDate();
                     if (isToday) {
@@ -498,15 +539,16 @@
                     }
 
                     if (markedDates[dateStr]) {
-                        cell.classList.add('marked');
+                        const color = markedDates[dateStr].color || 'red';
+                        cell.classList.add(color === 'purple' ? 'marked-purple' : 'marked-red');
                         // removed hours display here
                     }
-                    cell.onclick = (e) => { 
-                        e.preventDefault(); 
+                    cell.onclick = (e) => {
+                        e.preventDefault();
                         if (isEditMode) {
-                            handleCellClick(dateStr); 
+                            handleCellClick(dateStr);
                         } else if (markedDates[dateStr] && currentYear >= 2026) {
-                            // View Mode: Open read-only modal if marked and in 2026
+                            // View Mode: Open read-only modal if marked and in 2026+
                             openViewModal(dateStr);
                         }
                     };
@@ -522,7 +564,7 @@
             if (currentYear >= 2026) openEntryModal(dateStr);
             else {
                 if (markedDates[dateStr]) delete markedDates[dateStr];
-                else markedDates[dateStr] = { hours: null };
+                else markedDates[dateStr] = { hours: null, color: 'purple' };
                 saveToStorage(); initCalendar();
             }
         }
@@ -532,19 +574,21 @@
             activeDateStr = dateStr;
             const input = document.getElementById('hour-input');
             const data = markedDates[dateStr];
-            
+
             document.getElementById('entry-modal-title').innerText = "Stunden erfassen";
             document.getElementById('entry-modal-date').innerText = new Date(dateStr).toLocaleDateString('de-DE', { day: '2-digit', month: 'long', year: 'numeric' });
-            
+
             if (input) {
-                input.value = data ? data.hours : '';
+                input.value = data ? (data.hours || '') : '';
                 input.disabled = false; // Enable input
             }
-            
+
+            selectColor(data ? (data.color || 'red') : 'purple');
+
             // Show buttons
             const btnContainer = document.getElementById('modal-buttons');
             if (btnContainer) btnContainer.classList.remove('hidden');
-            
+
             document.getElementById('delete-entry-btn')?.classList.toggle('hidden', !data);
             document.getElementById('hour-entry-modal')?.classList.remove('hidden');
             setTimeout(() => input?.focus(), 100);
@@ -557,12 +601,14 @@
 
             document.getElementById('entry-modal-title').innerText = "Details";
             document.getElementById('entry-modal-date').innerText = new Date(dateStr).toLocaleDateString('de-DE', { day: '2-digit', month: 'long', year: 'numeric' });
-            
+
             const input = document.getElementById('hour-input');
             if (input) {
                 input.value = data.hours || 0;
                 input.disabled = true; // Disable input
             }
+
+            selectColor(data.color || 'red');
 
             // Hide buttons
             const btnContainer = document.getElementById('modal-buttons');
@@ -576,11 +622,12 @@
         function saveHourEntry() {
             if (!activeDateStr) return;
             const val = document.getElementById('hour-input')?.value;
-            if (val === '') delete markedDates[activeDateStr];
-            else {
+            if (val === '') {
+                markedDates[activeDateStr] = { hours: null, color: selectedColor };
+            } else {
                 let h = parseFloat(val.toString().replace(',', '.'));
                 if (isNaN(h) || h < 0.1 || h > 24) { showToast("Bitte 0.1 - 24 h eingeben."); return; }
-                markedDates[activeDateStr] = { hours: h };
+                markedDates[activeDateStr] = { hours: h, color: selectedColor };
             }
             saveToStorage(); initCalendar(); closeEntryModal();
         }
@@ -601,10 +648,10 @@
 
         function updateStats() {
             const keys = Object.keys(markedDates).filter(d => d.startsWith(String(currentYear)));
-            
+
             let weeksPassed = 52;
             const now = new Date();
-            
+
             if (currentYear === now.getFullYear()) {
                 const y = now.getFullYear();
                 const m = String(now.getMonth() + 1).padStart(2, '0');
@@ -626,7 +673,7 @@
             keys.forEach(dateStr => {
                 const dateObj = new Date(dateStr);
                 let weekNum = getISOWeek(dateStr);
-                
+
                 // Fix for end-of-year ISO week issue (e.g. Dec 30 is Week 1)
                 if (dateObj.getMonth() === 11 && weekNum === 1) weekNum = 53;
 
@@ -637,7 +684,7 @@
                     totalHours += h; if (h > 0) workdaysCount++;
                 }
             });
-            
+
             const hoursStatsDiv = document.getElementById('hours-stats');
             if (currentYear >= 2026) {
                 hoursStatsDiv?.classList.remove('hidden');
@@ -694,7 +741,7 @@
             reader.onload = function(e) {
                 try {
                     const imported = JSON.parse(e.target.result);
-                    if (Array.isArray(imported)) { markedDates = {}; imported.forEach(d => { markedDates[d] = { hours: null }; }); }
+                    if (Array.isArray(imported)) { markedDates = {}; imported.forEach(d => { markedDates[d] = { hours: null, color: 'red' }; }); }
                     else if (typeof imported === 'object') markedDates = imported;
                     saveToStorage(); initCalendar(); showToast("Import erfolgreich");
                 } catch (err) { showToast("Fehler beim Import"); }
@@ -703,7 +750,7 @@
             reader.readAsText(file);
             document.getElementById('actions-dropdown')?.classList.add('hidden');
         }
-        
+
         let touchStartX = 0;
         document.getElementById('main-viewport')?.addEventListener('touchstart', e => { touchStartX = e.changedTouches[0].screenX; }, {passive: true});
         document.getElementById('main-viewport')?.addEventListener('touchend', e => {
