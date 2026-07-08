@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
-    <title>Kalender 2025/2026</title>
+    <title>Kalender 2025-2027</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- External Libraries -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
@@ -54,46 +54,83 @@
         .edit-mode .day-cell:hover { background-color: #3d4959; border-color: #4b5563; color: white; }
         .edit-mode .day-cell:active { transform: scale(0.92); background-color: #4b5563; }
 
-        .day-cell.marked, .day-cell.marked-red {
-            background-color: #ef4444 !important;
+        .day-cell.marked, .day-cell.marked-orange {
+            background-color: #fb923c !important; /* orange-400 */
             color: white !important;
             font-weight: bold;
-            box-shadow: 0 4px 12px -1px rgba(239, 68, 68, 0.4);
+            box-shadow: 0 4px 12px -1px rgba(251, 146, 60, 0.4);
             border-color: transparent; /* Reset border for marked items unless it's today */
         }
 
-        .day-cell.marked-purple {
-            background-color: #a855f7 !important;
+        .day-cell.marked-red-muted {
+            background-color: #dc2626 !important; /* red-600 */
             color: white !important;
             font-weight: bold;
-            box-shadow: 0 4px 12px -1px rgba(168, 85, 247, 0.4);
+            box-shadow: 0 4px 12px -1px rgba(220, 38, 38, 0.4);
             border-color: transparent;
+        }
+
+        .day-cell.marked-white-red {
+            background-color: white !important;
+            color: white !important;
+            font-weight: bold;
+            position: relative;
+            box-shadow: 0 4px 12px -1px rgba(255, 255, 255, 0.2);
+            border-color: transparent;
+            overflow: hidden;
+        }
+
+        .day-cell.marked-white-red::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 75%;
+            height: 75%;
+            background-color: #dc2626;
+            border-radius: 0.5rem;
+            z-index: 0;
+        }
+
+        .day-cell.marked-white-red {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .day-cell.marked-white-red span {
+            position: relative;
+            z-index: 10;
         }
 
         /* Cursor pointer for marked cells even in non-edit mode (for viewing details) */
         .day-cell.marked:not(.edit-mode),
-        .day-cell.marked-red:not(.edit-mode),
-        .day-cell.marked-purple:not(.edit-mode) {
+        .day-cell.marked-orange:not(.edit-mode),
+        .day-cell.marked-red-muted:not(.edit-mode),
+        .day-cell.marked-white-red:not(.edit-mode) {
             cursor: pointer;
         }
         .day-cell.marked:not(.edit-mode):hover,
-        .day-cell.marked-red:not(.edit-mode):hover,
-        .day-cell.marked-purple:not(.edit-mode):hover {
+        .day-cell.marked-orange:not(.edit-mode):hover,
+        .day-cell.marked-red-muted:not(.edit-mode):hover,
+        .day-cell.marked-white-red:not(.edit-mode):hover {
             opacity: 0.9;
         }
 
         /* Specific style for Today */
         .day-cell.current-day-highlight {
-            border-color: #3b82f6 !important;
-            background-color: rgba(59, 130, 246, 0.1);
+            border-color: #60a5fa !important;
+            background-color: rgba(96, 165, 250, 0.1);
             color: #ffffff;
         }
         /* Ensure border is visible even if marked */
         .day-cell.marked.current-day-highlight,
-        .day-cell.marked-red.current-day-highlight,
-        .day-cell.marked-purple.current-day-highlight {
-            border-color: #ffffff !important; /* White border if red background */
-            box-shadow: 0 0 0 2px #3b82f6, 0 4px 12px -1px rgba(239, 68, 68, 0.4); /* Double ring effect */
+        .day-cell.marked-orange.current-day-highlight,
+        .day-cell.marked-red-muted.current-day-highlight,
+        .day-cell.marked-white-red.current-day-highlight {
+            border-color: #ffffff !important; /* White border if marked */
+            box-shadow: 0 0 0 2px #60a5fa, 0 4px 12px -1px rgba(96, 165, 250, 0.4); /* Double ring effect */
         }
 
         .chart-container {
@@ -167,8 +204,8 @@
         .toast-notification.show { opacity: 1; bottom: 120px; }
 
         .current-month-highlight {
-            border-color: #3b82f6 !important;
-            box-shadow: 0 0 20px rgba(59, 130, 246, 0.2);
+            border-color: #60a5fa !important;
+            box-shadow: 0 0 20px rgba(96, 165, 250, 0.2);
         }
 
         .menu-item {
@@ -201,7 +238,7 @@
     <!-- Top Navigation (Fixed) -->
     <nav class="fixed top-0 left-0 w-full bg-[#1a1f26]/95 backdrop-blur-xl border-b border-[#4b5563] z-50 no-print shadow-xl">
          <div class="flex justify-center gap-4 p-4 max-w-7xl mx-auto">
-             <button id="nav-dashboard" onclick="switchView('dashboard')" class="flex-1 md:flex-none px-8 py-3 rounded-2xl font-bold text-sm bg-blue-600 text-white transition-all shadow-lg shadow-blue-900/20 active:scale-95">
+             <button id="nav-dashboard" onclick="switchView('dashboard')" class="flex-1 md:flex-none px-8 py-3 rounded-2xl font-bold text-sm bg-blue-400 text-white transition-all shadow-lg shadow-blue-900/20 active:scale-95">
                 Dashboard
              </button>
              <button id="nav-calendar" onclick="switchView('calendar')" class="flex-1 md:flex-none px-8 py-3 rounded-2xl font-bold text-sm bg-[#2e3847] text-gray-300 hover:bg-[#3d4959] transition-all border border-[#4b5563] md:border-transparent active:scale-95">
@@ -338,8 +375,11 @@
             <div class="mb-6">
                 <label class="block text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-3 ml-1">Farbe</label>
                 <div class="flex gap-4 ml-1">
-                    <button onclick="selectColor('red')" id="color-red" class="w-10 h-10 rounded-full bg-[#ef4444] border-2 border-transparent transition-all hover:scale-110 active:scale-95"></button>
-                    <button onclick="selectColor('purple')" id="color-purple" class="w-10 h-10 rounded-full bg-[#a855f7] border-2 border-white ring-2 ring-[#a855f7] transition-all hover:scale-110 active:scale-95"></button>
+                    <button onclick="selectColor('orange')" id="color-orange" class="w-10 h-10 rounded-full bg-[#fb923c] border-2 border-transparent transition-all hover:scale-110 active:scale-95"></button>
+                    <button onclick="selectColor('red')" id="color-red" class="w-10 h-10 rounded-full bg-[#dc2626] border-2 border-transparent transition-all hover:scale-110 active:scale-95"></button>
+                    <button onclick="selectColor('white-red')" id="color-white-red" class="w-10 h-10 rounded-full bg-white border-2 border-transparent transition-all hover:scale-110 active:scale-95 flex items-center justify-center">
+                        <div class="w-6 h-6 bg-[#dc2626] rounded-md"></div>
+                    </button>
                 </div>
             </div>
             <div class="mb-8">
@@ -348,7 +388,7 @@
             </div>
             <!-- Buttons container - hidden in view mode -->
             <div id="modal-buttons" class="flex flex-col gap-3">
-                <button id="save-btn" onclick="saveHourEntry()" class="w-full py-4 bg-blue-600 text-white hover:bg-blue-700 rounded-2xl font-bold transition-all shadow-lg active:scale-95">Speichern</button>
+                <button id="save-btn" onclick="saveHourEntry()" class="w-full py-4 bg-blue-400 text-white hover:bg-blue-500 rounded-2xl font-bold transition-all shadow-lg active:scale-95">Speichern</button>
                 <button id="delete-entry-btn" onclick="deleteHourEntry()" class="w-full py-4 bg-red-900/30 text-red-400 hover:bg-red-900/50 rounded-2xl font-bold transition-all active:scale-95">Eintrag löschen</button>
             </div>
         </div>
@@ -377,23 +417,34 @@
         let markedDates = {};
         let charts = { weekday: null, week: null, hours: null };
         let activeDateStr = null;
-        let selectedColor = 'purple';
+        let selectedColor = 'white-red';
+
+        function mapLegacyColor(color) {
+            if (color === 'red') return 'orange';
+            if (color === 'purple') return 'red-muted';
+            return color;
+        }
 
         function selectColor(color) {
             selectedColor = color;
+            const orangeBtn = document.getElementById('color-orange');
             const redBtn = document.getElementById('color-red');
-            const purpleBtn = document.getElementById('color-purple');
+            const whiteRedBtn = document.getElementById('color-white-red');
 
-            if (color === 'red') {
-                redBtn.classList.add('border-white', 'ring-2', 'ring-[#ef4444]');
-                redBtn.classList.remove('border-transparent');
-                purpleBtn.classList.add('border-transparent');
-                purpleBtn.classList.remove('border-white', 'ring-2', 'ring-[#a855f7]');
-            } else {
-                purpleBtn.classList.add('border-white', 'ring-2', 'ring-[#a855f7]');
-                purpleBtn.classList.remove('border-transparent');
-                redBtn.classList.add('border-transparent');
-                redBtn.classList.remove('border-white', 'ring-2', 'ring-[#ef4444]');
+            [orangeBtn, redBtn, whiteRedBtn].forEach(btn => {
+                if (btn) {
+                    btn.classList.remove('border-white', 'ring-2', 'ring-blue-400', 'ring-orange-400', 'ring-red-600');
+                    btn.classList.add('border-transparent');
+                }
+            });
+
+            const activeBtn = document.getElementById('color-' + (color === 'red-muted' ? 'red' : color));
+            if (activeBtn) {
+                activeBtn.classList.remove('border-transparent');
+                activeBtn.classList.add('border-white', 'ring-2');
+                if (color === 'orange') activeBtn.classList.add('ring-orange-400');
+                else if (color === 'red-muted' || color === 'red') activeBtn.classList.add('ring-red-600');
+                else activeBtn.classList.add('ring-blue-400');
             }
         }
 
@@ -462,10 +513,10 @@
                 incoming.classList.add('active');
 
                 if (isGoingToDash) {
-                    btnDash.className = "flex-1 md:flex-none px-8 py-3 rounded-2xl font-bold text-sm bg-blue-600 text-white transition-all shadow-lg shadow-blue-900/20 active:scale-95";
+                    btnDash.className = "flex-1 md:flex-none px-8 py-3 rounded-2xl font-bold text-sm bg-blue-400 text-white transition-all shadow-lg shadow-blue-900/20 active:scale-95";
                     btnCal.className = "flex-1 md:flex-none px-8 py-3 rounded-2xl font-bold text-sm bg-[#2e3847] text-gray-300 hover:bg-[#3d4959] transition-all border border-[#4b5563] md:border-transparent active:scale-95";
                 } else {
-                    btnCal.className = "flex-1 md:flex-none px-8 py-3 rounded-2xl font-bold text-sm bg-blue-600 text-white transition-all shadow-lg shadow-blue-900/20 active:scale-95";
+                    btnCal.className = "flex-1 md:flex-none px-8 py-3 rounded-2xl font-bold text-sm bg-blue-400 text-white transition-all shadow-lg shadow-blue-900/20 active:scale-95";
                     btnDash.className = "flex-1 md:flex-none px-8 py-3 rounded-2xl font-bold text-sm bg-[#2e3847] text-gray-300 hover:bg-[#3d4959] transition-all border border-[#4b5563] md:border-transparent active:scale-95";
                 }
             });
@@ -511,6 +562,20 @@
             currentYear = year;
             document.getElementById('stat-year').innerText = year;
             document.getElementById('current-year-display').innerText = year;
+
+            const yearSelectorBtn = document.getElementById('year-selector-btn');
+            if (yearSelectorBtn) {
+                const now = new Date();
+                const isCurrentYear = year === now.getFullYear();
+                if (isCurrentYear) {
+                    yearSelectorBtn.classList.add('bg-blue-400', 'text-white');
+                    yearSelectorBtn.classList.remove('bg-[#2e3847]', 'text-gray-200');
+                } else {
+                    yearSelectorBtn.classList.remove('bg-blue-400', 'text-white');
+                    yearSelectorBtn.classList.add('bg-[#2e3847]', 'text-gray-200');
+                }
+            }
+
             document.getElementById('year-dropdown')?.classList.add('hidden');
             // Removed hourSection logic as we removed the chart
             initCalendar();
@@ -558,8 +623,18 @@
                     }
 
                     if (markedDates[dateStr]) {
-                        const color = markedDates[dateStr].color || 'red';
-                        cell.classList.add(color === 'purple' ? 'marked-purple' : 'marked-red');
+                        const data = markedDates[dateStr];
+                        let color = data.color || 'orange';
+
+                        // Check if the entry already has a color property or if it's a legacy one (hours-only or old color names)
+                        // If it's legacy data, we do the mapping. If it's new data with the correct color names, we don't.
+                        // We use a helper function for this mapping to keep it clean.
+                        color = mapLegacyColor(color);
+
+                        cell.classList.add('marked-' + color);
+                        if (color === 'white-red') {
+                            cell.innerHTML = `<span>${d}</span>`;
+                        }
                         // removed hours display here
                     }
                     cell.onclick = (e) => {
@@ -583,7 +658,7 @@
             if (currentYear >= 2026) openEntryModal(dateStr);
             else {
                 if (markedDates[dateStr]) delete markedDates[dateStr];
-                else markedDates[dateStr] = { hours: null, color: 'purple' };
+                else markedDates[dateStr] = { hours: null, color: 'white-red' };
                 saveToStorage(); initCalendar();
             }
         }
@@ -602,7 +677,9 @@
                 input.disabled = false; // Enable input
             }
 
-            selectColor(data ? (data.color || 'red') : 'purple');
+            let initialColor = data ? (data.color || 'orange') : 'white-red';
+            initialColor = mapLegacyColor(initialColor);
+            selectColor(initialColor);
 
             // Show buttons
             const btnContainer = document.getElementById('modal-buttons');
@@ -627,7 +704,9 @@
                 input.disabled = true; // Disable input
             }
 
-            selectColor(data.color || 'red');
+            let viewColor = data.color || 'orange';
+            viewColor = mapLegacyColor(viewColor);
+            selectColor(viewColor);
 
             // Hide buttons
             const btnContainer = document.getElementById('modal-buttons');
@@ -641,12 +720,13 @@
         function saveHourEntry() {
             if (!activeDateStr) return;
             const val = document.getElementById('hour-input')?.value;
+            const colorToSave = selectedColor === 'red' ? 'red-muted' : selectedColor;
             if (val === '') {
-                markedDates[activeDateStr] = { hours: null, color: selectedColor };
+                markedDates[activeDateStr] = { hours: null, color: colorToSave };
             } else {
                 let h = parseFloat(val.toString().replace(',', '.'));
                 if (isNaN(h) || h < 0.1 || h > 24) { showToast("Bitte 0.1 - 24 h eingeben."); return; }
-                markedDates[activeDateStr] = { hours: h, color: selectedColor };
+                markedDates[activeDateStr] = { hours: h, color: colorToSave };
             }
             saveToStorage(); initCalendar(); closeEntryModal();
         }
@@ -760,7 +840,7 @@
             reader.onload = function(e) {
                 try {
                     const imported = JSON.parse(e.target.result);
-                    if (Array.isArray(imported)) { markedDates = {}; imported.forEach(d => { markedDates[d] = { hours: null, color: 'red' }; }); }
+                    if (Array.isArray(imported)) { markedDates = {}; imported.forEach(d => { markedDates[d] = { hours: null, color: 'orange' }; }); }
                     else if (typeof imported === 'object') markedDates = imported;
                     saveToStorage(); initCalendar(); showToast("Import erfolgreich");
                 } catch (err) { showToast("Fehler beim Import"); }
